@@ -31,11 +31,14 @@ export function MovieDetailPage() {
   // Check if movie is in favorites
   useEffect(() => {
     if (!user || !movie?.data?.item) return;
-    
+
     const checkFavorite = async () => {
       try {
         const res = await authFetch(`/api/favorites/${slug}/check`, accessToken);
-        if (res && typeof res.favorited === 'boolean') {
+        // Handle unauthorized (token expired/invalid) - treat as not favorited, don't show error
+        if (res && res._unauthorized) {
+          setIsFavorite(false);
+        } else if (res && typeof res.favorited === 'boolean') {
           setIsFavorite(res.favorited);
         }
       } catch (e) {

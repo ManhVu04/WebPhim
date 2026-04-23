@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/auth.jsx';
 import { authFetch } from '../../lib/authApi.js';
 import { MovieCard } from '../../components/MovieCard.jsx';
@@ -7,6 +7,7 @@ import { Loading as State, ErrorState } from '../../components/State.jsx';
 
 export function FavoritesPage() {
   const { accessToken } = useAuth();
+  const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -15,9 +16,13 @@ export function FavoritesPage() {
     async function loadFavorites() {
       try {
         setLoading(true);
-        // The endpoint from our Spring Boot backend
         const res = await authFetch('/api/favorites', accessToken);
-        if (res._error || res._unauthorized) {
+        // Handle unauthorized - redirect to login instead of showing error
+        if (res && res._unauthorized) {
+          navigate('/dang-nhap', { state: { from: { pathname: '/yeu-thich' } }, replace: true });
+          return;
+        }
+        if (res._error) {
           throw new Error('Không thể tải danh sách phim yêu thích');
         }
         setData(res.items || res || []);
@@ -29,7 +34,7 @@ export function FavoritesPage() {
     }
 
     loadFavorites();
-  }, [accessToken]);
+  }, [accessToken, navigate]);
 
   const handleRemove = async (movieSlug) => {
     try {
