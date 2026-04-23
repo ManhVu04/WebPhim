@@ -148,23 +148,32 @@ export function MovieDetailPage() {
                     <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0 }}>
             <div className="muted">{item?.year ? `Năm ${item.year}` : ''}</div>
             {user && (
-              <button 
-                className="btn" 
+              <button
+                className="btn"
                 onClick={toggleFavorite}
                 disabled={favLoading}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: '6px',
+                  opacity: favLoading ? 0.7 : 1,
+                  cursor: favLoading ? 'wait' : 'pointer',
                   background: isFavorite ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255, 255, 255, 0.08)',
                   borderColor: isFavorite ? 'rgba(239, 68, 68, 0.5)' : 'transparent',
                   color: isFavorite ? '#fca5a5' : 'var(--text)'
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                </svg>
-                {isFavorite ? 'Đã thích' : 'Yêu thích'}
+                {favLoading ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
+                    <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                    <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                )}
+                {favLoading ? 'Đang xử lý...' : isFavorite ? 'Đã thích' : 'Yêu thích'}
               </button>
             )}
             <Link className="btnPrimary" to={`/xem/${encodeURIComponent(slug)}?server=0&ep=0`}>
