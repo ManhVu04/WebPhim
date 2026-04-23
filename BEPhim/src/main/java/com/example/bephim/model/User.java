@@ -24,4 +24,7 @@ public class User {
     private List<String> roles;
 
     private Instant createdAt;
+
+    // Token version - incrementing this invalidates all existing tokens
+    private int refreshTokenVersion = 0;
 }

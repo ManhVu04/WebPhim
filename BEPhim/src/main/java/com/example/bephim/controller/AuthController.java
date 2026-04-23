@@ -100,13 +100,22 @@ public class AuthController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Invalid token: missing userId"));
             }
 
-            // Find the user to get latest info
+            // Find the user to get latest info and verify token version
             User user = userService.findById(userId);
             if (user == null) {
                 return ResponseEntity.badRequest().body(Map.of("error", "User not found"));
             }
 
-            // Issue new tokens
+            // Verify refresh token version matches (invalidate old tokens if version changed)
+            Integer tokenVersion = decodedRefreshToken.getClaimAsString("refreshTokenVersion") != null
+                ? Integer.parseInt(decodedRefreshToken.getClaimAsString("refreshTokenVersion"))
+                : 0;
+            int userVersion = user.getRefreshTokenVersion();
+            if (tokenVersion != userVersion) {
+                return ResponseEntity.status(401).body(Map.of("error", "Token revoked"));
+            }
+
+            // Issue new tokens (version stays same since refresh successful)
             Map<String, Object> tokens = issueTokens(user);
             tokens.put("id", user.getId());
             tokens.put("username", user.getUsername());
@@ -137,7 +146,7 @@ public class AuthController {
                 JwtEncoderParameters.from(JwsHeader.with(SignatureAlgorithm.RS256).build(), accessClaims)
         ).getTokenValue();
 
-        // Refresh token (7 days)
+        // Refresh token (7 days) - include version for revocation
         JwtClaimsSet refreshClaims = JwtClaimsSet.builder()
                 .issuer("http://localhost:8080")
                 .issuedAt(now)
@@ -145,6 +154,7 @@ public class AuthController {
                 .subject(user.getUsername())
                 .claim("userId", user.getId())
                 .claim("tokenType", "refresh")
+                .claim("refreshTokenVersion", user.getRefreshTokenVersion())
                 .build();
 
         String refreshToken = jwtEncoder.encode(
