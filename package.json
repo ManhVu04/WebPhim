@@ -1,0 +1,23 @@
+{
+  "name": "webphim",
+  "version": "1.0.0",
+  "description": "WebPhim frontend optimized for loading speed via API integrations",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "optimize:api": "node scripts/optimizeApi.js",
+    "fetch:cdn": "node scripts/fetchCdnResources.js",
+    "preload:assets": "node scripts/preloadAssets.js",
+    "analyze:performance": "node scripts/analyzePerformance.js"
+  },
+  "keywords": [
+    "frontend",
+    "api",
+    "optimization",
+    "cdn",
+    "performance"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "module"
+}

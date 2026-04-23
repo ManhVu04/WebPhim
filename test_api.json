@@ -1,0 +1,1822 @@
+{
+  "status": "success",
+  "message": "",
+  "data": {
+    "seoOnPage": {
+      "og_type": "website",
+      "titleHead": "Phim Mới | Phim hay | Xem phim nhanh | Xem phim online | Phim mới vietsub hay nhất",
+      "descriptionHead": "Xem phim mới miễn phí nhanh chất lượng cao. Xem Phim online Việt Sub, Thuyết minh, lồng tiếng chất lượng HD. Xem phim nhanh online chất lượng cao",
+      "og_image": [
+        "/uploads/movies/pinanong-thumb.jpg",
+        "/uploads/movies/quy-co-giup-viec-phan-4-thumb.jpg",
+        "/uploads/movies/quy-co-giup-viec-phan-3-thumb.jpg",
+        "/uploads/movies/quy-co-giup-viec-phan-2-thumb.jpg",
+        "/uploads/movies/co-giup-viec-thumb.jpg",
+        "/uploads/movies/daredevil-tai-xuat-phan-2-thumb.jpg",
+        "/uploads/movies/bao-to-du-doi-thumb.jpg",
+        "/uploads/movies/long-anh-khong-kho-doan-thumb.jpg",
+        "/uploads/movies/minh-chau-ky-dam-phan-2-thumb.jpg",
+        "/uploads/movies/co-dau-thumb.jpg",
+        "/uploads/movies/one-piece-thumb.jpg",
+        "/uploads/movies/the-boys-phan-5-thumb-1775624659696.jpg",
+        "/uploads/movies/trai-dat-dong-bang-thumb.jpg",
+        "/uploads/movies/mai-moi-cho-doc-su-thumb.jpg",
+        "/uploads/movies/luc-do-toi-da-chuyen-sinh-thanh-slime-phan-4-thumb.jpg",
+        "/uploads/movies/chuyen-ke-cua-akane-thumb.jpg",
+        "/uploads/movies/nguyet-lan-y-ky-thumb.jpg",
+        "/uploads/movies/em-la-niem-vui-den-muon-thumb.jpg",
+        "/uploads/movies/ipossessed-thumb.jpg",
+        "/uploads/movies/bury-em-deep-thumb.jpg",
+        "/uploads/movies/bang-ho-trong-sinh-thumb.jpg",
+        "/uploads/movies/nu-hon-bac-ty-thumb.jpg",
+        "/uploads/movies/touch-me-thumb.jpg",
+        "/uploads/movies/skate-to-hell-thumb.jpg"
+      ],
+      "og_url": "danh-sach/phim-moi"
+    },
+    "breadCrumb": [
+      {
+        "name": "Phim Mới",
+        "slug": "/danh-sach/phim-moi",
+        "isCurrent": false,
+        "position": 2
+      },
+      {
+        "name": "Trang 1",
+        "isCurrent": true,
+        "position": 3
+      }
+    ],
+    "titlePage": "Phim Mới",
+    "items": [
+      {
+        "tmdb": {
+          "type": "tv",
+          "id": "298917",
+          "season": 1,
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "imdb": {
+          "id": "",
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "modified": {
+          "time": "2026-04-08T14:59:54Z"
+        },
+        "_id": "69abad07ccc6cea2688008c6",
+        "name": "Pinanong",
+        "slug": "pinanong",
+        "origin_name": "Pinanong",
+        "alternative_names": [
+          "Pin Anong"
+        ],
+        "type": "series",
+        "thumb_url": "pinanong-thumb.jpg",
+        "poster_url": "pinanong-poster.jpg",
+        "sub_docquyen": false,
+        "chieurap": false,
+        "time": "? phút/tập",
+        "episode_current": "Tập 23",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2026,
+        "category": [
+          {
+            "id": "620f3d2b91fa4af90ab697fe",
+            "name": "Chính kịch",
+            "slug": "chinh-kich"
+          }
+        ],
+        "country": [
+          {
+            "id": "620a2318e0fc277084dfd77a",
+            "name": "Thái Lan",
+            "slug": "thai-lan"
+          }
+        ],
+        "last_episodes": [
+          {
+            "server_name": "Vietsub #1",
+            "is_ai": false,
+            "name": "23"
+          }
+        ]
+      },
+      {
+        "tmdb": {
+          "type": "tv",
+          "id": "125282",
+          "season": 4,
+          "vote_average": 7.44,
+          "vote_count": 218
+        },
+        "imdb": {
+          "id": "tt11188682",
+          "vote_average": 7,
+          "vote_count": 12697
+        },
+        "modified": {
+          "time": "2026-04-08T14:59:39Z"
+        },
+        "_id": "69d5c14116bc1b4174f022e8",
+        "name": "Quý Cô Giúp Việc (Phần 4)",
+        "slug": "quy-co-giup-viec-phan-4",
+        "origin_name": "The Cleaning Lady (Season 4)",
+        "alternative_names": [
+          "女清洁工",
+          "The Cleaning Lady (US)",
+          "The Cleaning Lady",
+          "La chica que limpia",
+          "A Faxineira",
+          "La nettoyeuse",
+          "Uklízečka",
+          "La chica de la limpieza",
+          "A takarítónő",
+          "Pani sprzątająca",
+          "Doamna de la curățenie",
+          "Уборщица",
+          "Upratovačka"
+        ],
+        "type": "series",
+        "thumb_url": "quy-co-giup-viec-phan-4-thumb.jpg",
+        "poster_url": "quy-co-giup-viec-phan-4-poster.jpg",
+        "sub_docquyen": false,
+        "chieurap": false,
+        "time": "45 phút/tập",
+        "episode_current": "Hoàn tất (12/12)",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2025,
+        "category": [
+          {
+            "id": "620a2249e0fc277084dfd2e5",
+            "name": "Hình Sự",
+            "slug": "hinh-su"
+          },
+          {
+            "id": "620f3d2b91fa4af90ab697fe",
+            "name": "Chính kịch",
+            "slug": "chinh-kich"
+          }
+        ],
+        "country": [
+          {
+            "id": "620a231fe0fc277084dfd7ce",
+            "name": "Âu Mỹ",
+            "slug": "au-my"
+          }
+        ],
+        "last_episodes": [
+          {
+            "server_name": "Vietsub #1",
+            "is_ai": false,
+            "name": "12"
+          }
+        ]
+      },
+      {
+        "tmdb": {
+          "type": "tv",
+          "id": "125282",
+          "season": 3,
+          "vote_average": 7.44,
+          "vote_count": 218
+        },
+        "imdb": {
+          "id": "tt11188682",
+          "vote_average": 7,
+          "vote_count": 12697
+        },
+        "modified": {
+          "time": "2026-04-08T14:59:18Z"
+        },
+        "_id": "69d5c1244e2efe7288430e76",
+        "name": "Quý Cô Giúp Việc (Phần 3)",
+        "slug": "quy-co-giup-viec-phan-3",
+        "origin_name": "The Cleaning Lady (Season 3)",
+        "alternative_names": [
+          "女清洁工",
+          "The Cleaning Lady (US)",
+          "The Cleaning Lady",
+          "La chica que limpia",
+          "A Faxineira",
+          "La nettoyeuse",
+          "Uklízečka",
+          "La chica de la limpieza",
+          "A takarítónő",
+          "Pani sprzątająca",
+          "Doamna de la curățenie",
+          "Уборщица",
+          "Upratovačka"
+        ],
+        "type": "series",
+        "thumb_url": "quy-co-giup-viec-phan-3-thumb.jpg",
+        "poster_url": "quy-co-giup-viec-phan-3-poster.jpg",
+        "sub_docquyen": false,
+        "chieurap": false,
+        "time": "45 phút/tập",
+        "episode_current": "Hoàn tất (12/12)",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2024,
+        "category": [
+          {
+            "id": "620a2249e0fc277084dfd2e5",
+            "name": "Hình Sự",
+            "slug": "hinh-su"
+          },
+          {
+            "id": "620f3d2b91fa4af90ab697fe",
+            "name": "Chính kịch",
+            "slug": "chinh-kich"
+          }
+        ],
+        "country": [
+          {
+            "id": "620a231fe0fc277084dfd7ce",
+            "name": "Âu Mỹ",
+            "slug": "au-my"
+          }
+        ],
+        "last_episodes": [
+          {
+            "server_name": "Vietsub #1",
+            "is_ai": false,
+            "name": "12"
+          }
+        ]
+      },
+      {
+        "tmdb": {
+          "type": "tv",
+          "id": "125282",
+          "season": 2,
+          "vote_average": 7.44,
+          "vote_count": 218
+        },
+        "imdb": {
+          "id": "tt11188682",
+          "vote_average": 7,
+          "vote_count": 12697
+        },
+        "modified": {
+          "time": "2026-04-08T14:57:57Z"
+        },
+        "_id": "69d5c110da7d894068597a9f",
+        "name": "Quý Cô Giúp Việc (Phần 2)",
+        "slug": "quy-co-giup-viec-phan-2",
+        "origin_name": "The Cleaning Lady (Season 2)",
+        "alternative_names": [
+          "女清洁工",
+          "The Cleaning Lady (US)",
+          "The Cleaning Lady",
+          "La chica que limpia",
+          "A Faxineira",
+          "La nettoyeuse",
+          "Uklízečka",
+          "La chica de la limpieza",
+          "A takarítónő",
+          "Pani sprzątająca",
+          "Doamna de la curățenie",
+          "Уборщица",
+          "Upratovačka"
+        ],
+        "type": "series",
+        "thumb_url": "quy-co-giup-viec-phan-2-thumb.jpg",
+        "poster_url": "quy-co-giup-viec-phan-2-poster.jpg",
+        "sub_docquyen": false,
+        "chieurap": false,
+        "time": "45 phút/tập",
+        "episode_current": "Hoàn tất (12/12)",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2022,
+        "category": [
+          {
+            "id": "620a2249e0fc277084dfd2e5",
+            "name": "Hình Sự",
+            "slug": "hinh-su"
+          },
+          {
+            "id": "620f3d2b91fa4af90ab697fe",
+            "name": "Chính kịch",
+            "slug": "chinh-kich"
+          }
+        ],
+        "country": [
+          {
+            "id": "620a231fe0fc277084dfd7ce",
+            "name": "Âu Mỹ",
+            "slug": "au-my"
+          }
+        ],
+        "last_episodes": [
+          {
+            "server_name": "Vietsub #1",
+            "is_ai": false,
+            "name": "12"
+          }
+        ]
+      },
+      {
+        "tmdb": {
+          "type": "tv",
+          "id": "125282",
+          "season": 1,
+          "vote_average": 7.41,
+          "vote_count": 210
+        },
+        "imdb": {
+          "id": "tt11188682",
+          "vote_average": 7,
+          "vote_count": 12697
+        },
+        "modified": {
+          "time": "2026-04-08T14:57:28Z"
+        },
+        "_id": "6270d09a3a2c0c6289ba2bcb",
+        "name": "Quý Cô Giúp Việc (Phần 1)",
+        "origin_name": "The Cleaning Lady (Season 1)",
+        "type": "series",
+        "thumb_url": "co-giup-viec-thumb.jpg",
+        "sub_docquyen": false,
+        "time": "45 Phút",
+        "episode_current": "Hoàn tất (10/10)",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "slug": "co-giup-viec",
+        "year": 2022,
+        "category": [
+          {
+            "id": "620a2249e0fc277084dfd2e5",
+            "name": "Hình Sự",
+            "slug": "hinh-su"
+          },
+          {
+            "id": "620f3d2b91fa4af90ab697fe",
+            "name": "Chính kịch",
+            "slug": "chinh-kich"
+          }
+        ],
+        "country": [
+          {
+            "id": "620a231fe0fc277084dfd7ce",
+            "name": "Âu Mỹ",
+            "slug": "au-my"
+          }
+        ],
+        "chieurap": false,
+        "poster_url": "co-giup-viec-poster.jpg",
+        "alternative_names": [
+          "The Cleaning Lady 2022",
+          "The Cleaning Lady (US)",
+          "La chica que limpia",
+          "A Faxineira",
+          "La nettoyeuse",
+          "Uklízečka",
+          "La chica de la limpieza",
+          "A takarítónő",
+          "Pani sprzątająca",
+          "Doamna de la curățenie",
+          "Уборщица",
+          "Upratovačka"
+        ],
+        "lang_key": [
+          "vs"
+        ],
+        "last_episodes": [
+          {
+            "server_name": "Vietsub #1",
+            "is_ai": false,
+            "name": "10"
+          }
+        ]
+      },
+      {
+        "tmdb": {
+          "type": "tv",
+          "id": "202555",
+          "season": 2,
+          "vote_average": 7.971,
+          "vote_count": 678
+        },
+        "imdb": {
+          "id": "tt18923754",
+          "vote_average": 8,
+          "vote_count": 87894
+        },
+        "modified": {
+          "time": "2026-04-08T14:52:49Z"
+        },
+        "_id": "69c39efcf65d22d617b84ba1",
+        "name": "Daredevil: Tái Xuất (Phần 2)",
+        "slug": "daredevil-tai-xuat-phan-2",
+        "origin_name": "Daredevil: Born Again (Season 2)",
+        "alternative_names": [
+          "Marvel Television Demolidor: Renascido",
+          "Demolidor: Renascido da Marvel Television",
+          "Daredevil : Renaître de Marvel Television",
+          "夜魔侠：重生",
+          "Marvel's Daredevil Born Again",
+          "Daredevil : Renaissance",
+          "Daredevil : Renouveau",
+          "თავქარიანი: თავიდან დაბადება",
+          "თავზეხელაღებული: თავიდან დაბადება",
+          "Fenegyerek: Újjászületés",
+          "Daredevil - Rinascita",
+          "Шибайголова: Народжений знову",
+          "Шибайголова: Народжений наново",
+          "Marvel Studios' Daredevil: Born Again",
+          "Marvel Television's Daredevil: Born Again",
+          "Daredevil: Born Again",
+          "Demolidor: Renascido",
+          "Daredevil: Znovuzrození",
+          "Daredevil: Újjászületés",
+          "デアデビル：ボーン・アゲイン",
+          "Daredevil",
+          "Daredevil: Odrodzenie",
+          "Demolidor: Nascer de Novo",
+          "Дердевил: Поново рођен",
+          "Сорвиголова. Рожденный заново",
+          "Daredevil: Znovuzrodenie",
+          "夜魔俠：重生",
+          "Шибайголова: Народжений заново",
+          "Out the Kitchen",
+          "Daredevil: Tái Sinh",
+          "Untitled Daredevil Disney+ Reboot Project"
+        ],
+        "type": "series",
+        "thumb_url": "daredevil-tai-xuat-phan-2-thumb.jpg",
+        "poster_url": "daredevil-tai-xuat-phan-2-poster.jpg",
+        "sub_docquyen": true,
+        "chieurap": false,
+        "time": "53 phút/tập",
+        "episode_current": "Tập 4",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2026,
+        "category": [
+          {
+            "id": "620a2249e0fc277084dfd2e5",
+            "name": "Hình Sự",
+            "slug": "hinh-su"
+          },
+          {
+            "id": "620f3d2b91fa4af90ab697fe",
+            "name": "Chính kịch",
+            "slug": "chinh-kich"
+          },
+          {
+            "id": "620a21b2e0fc277084dfd0c5",
+            "name": "Hành Động",
+            "slug": "hanh-dong"
+          }
+        ],
+        "country": [
+          {
+            "id": "620a231fe0fc277084dfd7ce",
+            "name": "Âu Mỹ",
+            "slug": "au-my"
+          }
+        ],
+        "last_episodes": [
+          {
+            "server_name": "Subteam #1",
+            "is_ai": false,
+            "name": "4"
+          }
+        ]
+      },
+      {
+        "tmdb": {
+          "type": "tv",
+          "id": "318169",
+          "season": 1,
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "imdb": {
+          "id": "",
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "modified": {
+          "time": "2026-04-08T14:46:10Z"
+        },
+        "_id": "69cfc1840a0114095c87307b",
+        "name": "Bão Tố Dữ Dội",
+        "slug": "bao-to-du-doi",
+        "origin_name": "The Storm",
+        "alternative_names": [
+          "Sharp Downpour / Sharp Downpour"
+        ],
+        "type": "series",
+        "thumb_url": "bao-to-du-doi-thumb.jpg",
+        "poster_url": "bao-to-du-doi-poster.jpg",
+        "sub_docquyen": false,
+        "chieurap": false,
+        "time": "? phút/tập",
+        "episode_current": "Tập 14",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2026,
+        "category": [
+          {
+            "id": "620f3d2b91fa4af90ab697fe",
+            "name": "Chính kịch",
+            "slug": "chinh-kich"
+          }
+        ],
+        "country": [
+          {
+            "id": "62093063196e9f4ab6b448b8",
+            "name": "Trung Quốc",
+            "slug": "trung-quoc"
+          }
+        ],
+        "last_episodes": [
+          {
+            "server_name": "Vietsub #1",
+            "is_ai": false,
+            "name": "14"
+          }
+        ]
+      },
+      {
+        "tmdb": {
+          "type": "tv",
+          "id": "317762",
+          "season": 1,
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "imdb": {
+          "id": "tt41164579",
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "modified": {
+          "time": "2026-04-08T14:45:42Z"
+        },
+        "_id": "69ca1f9ed88856be7725eca5",
+        "name": "Lòng Anh Không Khó Đoán",
+        "slug": "long-anh-khong-kho-doan",
+        "origin_name": "Born To Be The Villain",
+        "alternative_names": [
+          "他心不難測"
+        ],
+        "type": "series",
+        "thumb_url": "long-anh-khong-kho-doan-thumb.jpg",
+        "poster_url": "long-anh-khong-kho-doan-poster.jpg",
+        "sub_docquyen": false,
+        "chieurap": false,
+        "time": "undefined phút",
+        "episode_current": "Tập 18",
+        "quality": "FHD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2026,
+        "category": [
+          {
+            "id": "620f3d2b91fa4af90ab697fe",
+            "name": "Chính kịch",
+            "slug": "chinh-kich"
+          }
+        ],
+        "country": [
+          {
+            "id": "62093063196e9f4ab6b448b8",
+            "name": "Trung Quốc",
+            "slug": "trung-quoc"
+          }
+        ],
+        "last_episodes": [
+          {
+            "server_name": "Vietsub #1",
+            "is_ai": false,
+            "name": "18"
+          }
+        ]
+      },
+      {
+        "tmdb": {
+          "type": "tv",
+          "id": "316374",
+          "season": 2,
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "imdb": {
+          "id": "tt40606760",
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "modified": {
+          "time": "2026-04-08T14:44:49Z"
+        },
+        "_id": "69c7aab9e263b2a946273f02",
+        "name": "Minh Châu Kỳ Đàm (Phần 2)",
+        "slug": "minh-chau-ky-dam-phan-2",
+        "origin_name": "The Secret of the Lost Pearl (Season 2)",
+        "alternative_names": [
+          "鬼吹灯",
+          "Ming Zhu Qi Tan",
+          "​明珠奇谭第二季​",
+          "Candle in the Tomb",
+          "Ghost Blows Out the Light",
+          "明珠奇谭",
+          "The Secret of the Lost Pearl"
+        ],
+        "type": "series",
+        "thumb_url": "minh-chau-ky-dam-phan-2-thumb.jpg",
+        "poster_url": "minh-chau-ky-dam-phan-2-poster.jpg",
+        "sub_docquyen": false,
+        "chieurap": false,
+        "time": "? phút/tập",
+        "episode_current": "Tập 21",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2026,
+        "category": [
+          {
+            "id": "620a21b2e0fc277084dfd0c5",
+            "name": "Hành Động",
+            "slug": "hanh-dong"
+          },
+          {
+            "id": "620a2293e0fc277084dfd489",
+            "name": "Phiêu Lưu",
+            "slug": "phieu-luu"
+          }
+        ],
+        "country": [
+          {
+            "id": "62093063196e9f4ab6b448b8",
+            "name": "Trung Quốc",
+            "slug": "trung-quoc"
+          }
+        ],
+        "last_episodes": [
+          {
+            "server_name": "Vietsub #1",
+            "is_ai": false,
+            "name": "21"
+          }
+        ]
+      },
+      {
+        "tmdb": {
+          "type": "movie",
+          "id": "1159831",
+          "season": null,
+          "vote_average": 8.1,
+          "vote_count": 14
+        },
+        "imdb": {
+          "id": "tt30851137",
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "modified": {
+          "time": "2026-04-08T14:38:31Z"
+        },
+        "_id": "69a905650a0114095c7e2932",
+        "name": "Cô Dâu!",
+        "slug": "co-dau",
+        "origin_name": "The Bride!",
+        "alternative_names": [
+          "Untitled Maggie Gyllenhaal Project",
+          "La novia!",
+          "The Bride! - Es lebe die Braut",
+          "A Noiva!",
+          "Булката!",
+          "暗黑新娘!",
+          "Nevěsta!",
+          "Pruut!",
+          "Η νύφη!",
+          "闇黑新娘",
+          "A menyasszony!",
+          "La sposa!",
+          "Невеста!",
+          "Līgava!",
+          "Nuotaka!",
+          "Panna młoda!",
+          "Mireasa!",
+          "Nevesta!",
+          "科學新娘!",
+          "Gelin!",
+          "Наречена!",
+          "เจ้าสาว!",
+          "La fiancée!",
+          "¡La novia!",
+          "暗黑新娘！",
+          "The Bride",
+          "ザ・ブライド！",
+          "科學新娘！"
+        ],
+        "type": "single",
+        "thumb_url": "co-dau-thumb.jpg",
+        "poster_url": "co-dau-poster.jpg",
+        "sub_docquyen": false,
+        "chieurap": true,
+        "time": "126 Phút",
+        "episode_current": "Full",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2026,
+        "category": [
+          {
+            "id": "620a221de0fc277084dfd1c1",
+            "name": "Hài Hước",
+            "slug": "hai-huoc"
+          },
+          {
+            "id": "620a2282e0fc277084dfd435",
+            "name": "Viễn Tưởng",
+            "slug": "vien-tuong"
+          },
+          {
+            "id": "620a229be0fc277084dfd4dd",
+            "name": "Khoa Học",
+            "slug": "khoa-hoc"
+          },
+          {
+            "id": "620a22ace0fc277084dfd531",
+            "name": "Kinh Dị",
+            "slug": "kinh-di"
+          }
+        ],
+        "country": [
+          {
+            "id": "620a231fe0fc277084dfd7ce",
+            "name": "Âu Mỹ",
+            "slug": "au-my"
+          }
+        ],
+        "last_episodes": [
+          {
+            "server_name": "Vietsub #1",
+            "is_ai": false,
+            "name": "Full"
+          }
+        ]
+      },
+      {
+        "tmdb": {
+          "type": "tv",
+          "id": "37854",
+          "season": 1,
+          "vote_average": 8.7,
+          "vote_count": 5118
+        },
+        "imdb": {
+          "id": "tt0388629",
+          "vote_average": 9,
+          "vote_count": 341535
+        },
+        "modified": {
+          "time": "2026-04-08T14:37:19Z"
+        },
+        "_id": "6220e66e8481266c5b7f154f",
+        "name": "Đảo Hải Tặc",
+        "origin_name": "One Piece (Luffy)",
+        "type": "hoathinh",
+        "thumb_url": "one-piece-thumb.jpg",
+        "time": "25 phút/tập",
+        "episode_current": "Tập 1156",
+        "quality": "FHD",
+        "lang": "Vietsub",
+        "slug": "one-piece",
+        "year": 1999,
+        "category": [
+          {
+            "id": "620a21b2e0fc277084dfd0c5",
+            "name": "Hành Động",
+            "slug": "hanh-dong"
+          },
+          {
+            "id": "620a221de0fc277084dfd1c1",
+            "name": "Hài Hước",
+            "slug": "hai-huoc"
+          },
+          {
+            "id": "620a2293e0fc277084dfd489",
+            "name": "Phiêu Lưu",
+            "slug": "phieu-luu"
+          }
+        ],
+        "country": [
+          {
+            "id": "620a2307e0fc277084dfd726",
+            "name": "Nhật Bản",
+            "slug": "nhat-ban"
+          }
+        ],
+        "sub_docquyen": false,
+        "chieurap": false,
+        "poster_url": "one-piece-poster.jpg",
+        "alternative_names": [
+          "ون بيس",
+          "海贼王",
+          "海賊王",
+          "Ek Tukda",
+          "Tutti All'arrembaggio",
+          "One Piece: Tutti All'arrembaggio!",
+          "All'arrembaggio!",
+          "Wan Pisu",
+          "ONE PIECE FAN LETTER",
+          "ONE PIECE",
+          "SPECIAL EDITED VERSION『ONE PIECE』魚人島編",
+          "Budak Getah",
+          "Rubber Boy",
+          "وَن پِیس",
+          "Jackpot",
+          "Большой Куш",
+          "วันพีช",
+          "One Piece",
+          "航海王",
+          "ВЕЛИКИЙ КУШ",
+          "Єдиний Скарб",
+          "One Piece Log: Fish-Man Island Saga",
+          "One Piece: Pirate King",
+          "One Piece: Pirate Island",
+          "Van Pis",
+          "One Piece: Wan pîsu",
+          "Une Piece",
+          "Drake: To kynigi tou thisavrou",
+          "Ντρέικ: Το κυνήγι του θησαυρού",
+          "All'arrembaggio! - One Piece",
+          "Tutti all'arrembaggio",
+          "Wan pîsu",
+          "Ван Пис",
+          "One Piece: Stampede",
+          "Ван-Пис",
+          "One Piece: Wan Pîsu",
+          "Ван Піс",
+          "One Piece: Đảo Hải Tặc"
+        ],
+        "lang_key": [
+          "vs"
+        ],
+        "last_episodes": [
+          {
+            "server_name": "Vietsub #1",
+            "is_ai": false,
+            "name": "1156"
+          }
+        ]
+      },
+      {
+        "tmdb": {
+          "type": "tv",
+          "id": "76479",
+          "season": 5,
+          "vote_average": 8.442,
+          "vote_count": 11563
+        },
+        "imdb": {
+          "id": "tt1190634",
+          "vote_average": 8.6,
+          "vote_count": 822500
+        },
+        "modified": {
+          "time": "2026-04-08T14:26:39Z"
+        },
+        "_id": "695f5290f063d23bbbc21c06",
+        "name": "The Boys (Phần 5)",
+        "slug": "the-boys-phan-5",
+        "origin_name": "The Boys (Season 5)",
+        "alternative_names": [
+          "Момчетата",
+          "黑袍纠察队",
+          "英雄克星",
+          "Kluci",
+          "A fiúk",
+          "ザ・ボーイズ",
+          "더 보이즈",
+          "Chłopcy",
+          "Băieții",
+          "Дечаци",
+          "Парни",
+          "Chlapci",
+          "ก๊วนหนุ่มซ่าล่าซูเปอร์ฮีโร่",
+          "黑袍糾察隊",
+          "Хлопці",
+          "Хлопчаки",
+          "Пацани",
+          "Yigitlar",
+          "Siêu Anh Hùng Phá Hoại",
+          "The Boys",
+          "Os Guri",
+          "Banda",
+          "Σώμα δίωξης υπερηρώων",
+          "Dečki",
+          "A Fiúk",
+          "Пацаны",
+          "Хлопаки"
+        ],
+        "type": "series",
+        "thumb_url": "the-boys-phan-5-thumb-1775624659696.jpg",
+        "poster_url": "the-boys-phan-5-poster.jpg",
+        "sub_docquyen": false,
+        "chieurap": false,
+        "time": "69 phút/tập",
+        "episode_current": "Tập 1",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2026,
+        "category": [
+          {
+            "id": "620a21b2e0fc277084dfd0c5",
+            "name": "Hành Động",
+            "slug": "hanh-dong"
+          },
+          {
+            "id": "620a2282e0fc277084dfd435",
+            "name": "Viễn Tưởng",
+            "slug": "vien-tuong"
+          },
+          {
+            "id": "620a2293e0fc277084dfd489",
+            "name": "Phiêu Lưu",
+            "slug": "phieu-luu"
+          },
+          {
+            "id": "620a229be0fc277084dfd4dd",
+            "name": "Khoa Học",
+            "slug": "khoa-hoc"
+          }
+        ],
+        "country": [
+          {
+            "id": "620a231fe0fc277084dfd7ce",
+            "name": "Âu Mỹ",
+            "slug": "au-my"
+          }
+        ],
+        "last_episodes": [
+          {
+            "server_name": "Vietsub #1",
+            "is_ai": false,
+            "name": "1"
+          }
+        ]
+      },
+      {
+        "tmdb": {
+          "type": "tv",
+          "id": "296232",
+          "season": 1,
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "imdb": {
+          "id": "tt39229727",
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "modified": {
+          "time": "2026-04-08T12:16:38Z"
+        },
+        "_id": "69d5e08d93c48ff6bfe68daa",
+        "name": "Trái Đất Đóng Băng",
+        "slug": "trai-dat-dong-bang",
+        "origin_name": "SNOWBALL EARTH",
+        "alternative_names": [
+          "スノウボールアース",
+          "Земля-снежок"
+        ],
+        "type": "hoathinh",
+        "thumb_url": "trai-dat-dong-bang-thumb.jpg",
+        "poster_url": "trai-dat-dong-bang-poster.jpg",
+        "sub_docquyen": false,
+        "chieurap": false,
+        "time": "23 phút/tập",
+        "episode_current": "Tập 1",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2026,
+        "category": [
+          {
+            "id": "620a21b2e0fc277084dfd0c5",
+            "name": "Hành Động",
+            "slug": "hanh-dong"
+          },
+          {
+            "id": "620a2282e0fc277084dfd435",
+            "name": "Viễn Tưởng",
+            "slug": "vien-tuong"
+          },
+          {
+            "id": "620a2293e0fc277084dfd489",
+            "name": "Phiêu Lưu",
+            "slug": "phieu-luu"
+          },
+          {
+            "id": "620a229be0fc277084dfd4dd",
+            "name": "Khoa Học",
+            "slug": "khoa-hoc"
+          }
+        ],
+        "country": [
+          {
+            "id": "620a2307e0fc277084dfd726",
+            "name": "Nhật Bản",
+            "slug": "nhat-ban"
+          }
+        ],
+        "last_episodes": [
+          {
+            "server_name": "Vietsub #1",
+            "is_ai": false,
+            "name": "1"
+          }
+        ]
+      },
+      {
+        "tmdb": {
+          "type": "tv",
+          "id": "301944",
+          "season": 1,
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "imdb": {
+          "id": "tt39122769",
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "modified": {
+          "time": "2026-04-08T12:16:28Z"
+        },
+        "_id": "69d5dfb315072466ace88b55",
+        "name": "Mai Mối Cho Độc Sư",
+        "slug": "mai-moi-cho-doc-su",
+        "origin_name": "Marriage Toxin",
+        "alternative_names": [
+          "MARRIAGETOXIN",
+          "Брачный токсин"
+        ],
+        "type": "hoathinh",
+        "thumb_url": "mai-moi-cho-doc-su-thumb.jpg",
+        "poster_url": "mai-moi-cho-doc-su-poster.jpg",
+        "sub_docquyen": false,
+        "chieurap": false,
+        "time": "24 phút/tập",
+        "episode_current": "Tập 1",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2026,
+        "category": [
+          {
+            "id": "620a21b2e0fc277084dfd0c5",
+            "name": "Hành Động",
+            "slug": "hanh-dong"
+          },
+          {
+            "id": "620a221de0fc277084dfd1c1",
+            "name": "Hài Hước",
+            "slug": "hai-huoc"
+          },
+          {
+            "id": "620a2293e0fc277084dfd489",
+            "name": "Phiêu Lưu",
+            "slug": "phieu-luu"
+          }
+        ],
+        "country": [
+          {
+            "id": "620a2307e0fc277084dfd726",
+            "name": "Nhật Bản",
+            "slug": "nhat-ban"
+          }
+        ],
+        "last_episodes": [
+          {
+            "server_name": "Vietsub #1",
+            "is_ai": false,
+            "name": "1"
+          }
+        ]
+      },
+      {
+        "tmdb": {
+          "type": "tv",
+          "id": "82684",
+          "season": 4,
+          "vote_average": 8.389,
+          "vote_count": 859
+        },
+        "imdb": {
+          "id": "tt9054364",
+          "vote_average": 8,
+          "vote_count": 22072
+        },
+        "modified": {
+          "time": "2026-04-08T12:16:06Z"
+        },
+        "_id": "69d5e11f7e5a0662d4dc7c5f",
+        "name": "Lúc Đó Tôi Đã Chuyển Sinh Thành Slime (Phần 4)",
+        "slug": "luc-do-toi-da-chuyen-sinh-thanh-slime-phan-4",
+        "origin_name": "That Time I Got Reincarnated as a Slime (Season 4)",
+        "alternative_names": [
+          "Aquella vez que reencarne como un Slime",
+          "關於我轉生變成史萊姆這檔事",
+          "Tensei Shitara Slime Datta Ken",
+          "史莱姆",
+          "That Time I Got Reincarnated as a Slime",
+          "TenSura",
+          "Regarding Reincarnated to Slime",
+          "Aquella vez que me convertí en Slime",
+          "Moi",
+          "quand je me réincarne en Slime",
+          "آن زمان که به‌عنوان یک اسلایم زندگی دوباره یافتم",
+          "تولد دوباره به‌عنوان یک اسلایم",
+          "وقتی به‌عنوان یک اسلایم تناسخ پیدا کردم",
+          "Tensei shitara Slime Datta Ken",
+          "Tensei Slime",
+          "Tensei shitara Slime Datta Ken 2",
+          "TenSura 2",
+          "転生したらスライムだった件",
+          "転スラ",
+          "Tensei Shitara Slime Datta Ken 3rd Season",
+          "Tensei Shitara Slime Datta Ken: Coleus no Yume",
+          "Tensei Shitara Slime Datta Ken S4",
+          "Tensei Shitara Slime Datta Ken 4th Season",
+          "전생했더니 슬라임이었던 건에 대하여",
+          "전생했더니 슬라임이었던 건에 대하여 3기",
+          "關於我轉生變成史萊姆這檔事 柯里烏斯之夢",
+          "That Time I Got Reincarnated as a Slime 2",
+          "That Time I Got Reincarnated as a Slime: Visions of Coleus",
+          "Chuyển Sinh Thành Slime",
+          "关于我转生变成史莱姆这档事",
+          "Meine Wiedergeburt als Schleim in einer anderen Welt",
+          "Tensei Shitara Suraimu Datta Ken",
+          "О моём перерождении в слизь",
+          "Коли я переродився слизом",
+          "Lúc Đó Tôi Đã Chuyển Sinh Thành Slime"
+        ],
+        "type": "hoathinh",
+        "thumb_url": "luc-do-toi-da-chuyen-sinh-thanh-slime-phan-4-thumb.jpg",
+        "poster_url": "luc-do-toi-da-chuyen-sinh-thanh-slime-phan-4-poster.jpg",
+        "sub_docquyen": false,
+        "chieurap": false,
+        "time": "24 phút/tập",
+        "episode_current": "Tập 1",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2026,
+        "category": [
+          {
+            "id": "620a21b2e0fc277084dfd0c5",
+            "name": "Hành Động",
+            "slug": "hanh-dong"
+          },
+          {
+            "id": "620a221de0fc277084dfd1c1",
+            "name": "Hài Hước",
+            "slug": "hai-huoc"
+          },
+          {
+            "id": "620a2282e0fc277084dfd435",
+            "name": "Viễn Tưởng",
+            "slug": "vien-tuong"
+          },
+          {
+            "id": "620a2293e0fc277084dfd489",
+            "name": "Phiêu Lưu",
+            "slug": "phieu-luu"
+          },
+          {
+            "id": "620a229be0fc277084dfd4dd",
+            "name": "Khoa Học",
+            "slug": "khoa-hoc"
+          }
+        ],
+        "country": [
+          {
+            "id": "620a2307e0fc277084dfd726",
+            "name": "Nhật Bản",
+            "slug": "nhat-ban"
+          }
+        ],
+        "last_episodes": [
+          {
+            "server_name": "Vietsub #1",
+            "is_ai": false,
+            "name": "1"
+          }
+        ]
+      },
+      {
+        "tmdb": {
+          "type": "tv",
+          "id": "297438",
+          "season": 1,
+          "vote_average": 7.5,
+          "vote_count": 1
+        },
+        "imdb": {
+          "id": "tt38797595",
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "modified": {
+          "time": "2026-04-08T12:15:52Z"
+        },
+        "_id": "69d5e020e53e6a47ad57f86c",
+        "name": "Chuyện Kể Của Akane",
+        "slug": "chuyen-ke-cua-akane",
+        "origin_name": "Akane-banashi",
+        "alternative_names": [
+          "Tales of Akane",
+          "Akane Story",
+          "Сказание об Аканэ"
+        ],
+        "type": "hoathinh",
+        "thumb_url": "chuyen-ke-cua-akane-thumb.jpg",
+        "poster_url": "chuyen-ke-cua-akane-poster.jpg",
+        "sub_docquyen": false,
+        "chieurap": false,
+        "time": "25 phút/tập",
+        "episode_current": "Tập 1",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2026,
+        "category": [
+          {
+            "id": "620f3d2b91fa4af90ab697fe",
+            "name": "Chính kịch",
+            "slug": "chinh-kich"
+          }
+        ],
+        "country": [
+          {
+            "id": "620a2307e0fc277084dfd726",
+            "name": "Nhật Bản",
+            "slug": "nhat-ban"
+          }
+        ],
+        "last_episodes": [
+          {
+            "server_name": "Vietsub #1",
+            "is_ai": false,
+            "name": "1"
+          }
+        ]
+      },
+      {
+        "tmdb": {
+          "type": "tv",
+          "id": "278275",
+          "season": 1,
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "imdb": {
+          "id": "tt35046984",
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "modified": {
+          "time": "2026-04-08T12:15:36Z"
+        },
+        "_id": "69cbbf964da3bf6eb346f5e5",
+        "name": "Nguyệt Lân Ỷ Kỷ",
+        "slug": "nguyet-lan-y-ky",
+        "origin_name": "Veil of Shadows",
+        "alternative_names": [
+          "画皮",
+          "Painted Skin: The Resurrection",
+          "月鳞绮纪"
+        ],
+        "type": "series",
+        "thumb_url": "nguyet-lan-y-ky-thumb.jpg",
+        "poster_url": "nguyet-lan-y-ky-poster.jpg",
+        "sub_docquyen": false,
+        "chieurap": false,
+        "time": "? phút/tập",
+        "episode_current": "Tập 16",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2026,
+        "category": [
+          {
+            "id": "620a2282e0fc277084dfd435",
+            "name": "Viễn Tưởng",
+            "slug": "vien-tuong"
+          },
+          {
+            "id": "620a229be0fc277084dfd4dd",
+            "name": "Khoa Học",
+            "slug": "khoa-hoc"
+          },
+          {
+            "id": "620f3d2b91fa4af90ab697fe",
+            "name": "Chính kịch",
+            "slug": "chinh-kich"
+          }
+        ],
+        "country": [
+          {
+            "id": "62093063196e9f4ab6b448b8",
+            "name": "Trung Quốc",
+            "slug": "trung-quoc"
+          }
+        ],
+        "last_episodes": [
+          {
+            "server_name": "Vietsub #1",
+            "is_ai": false,
+            "name": "16"
+          }
+        ]
+      },
+      {
+        "tmdb": {
+          "type": "tv",
+          "id": "283961",
+          "season": 1,
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "imdb": {
+          "id": "tt36982546",
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "modified": {
+          "time": "2026-04-08T12:00:55Z"
+        },
+        "_id": "69c4bee8f65d22d617b880f2",
+        "name": "Em là niềm vui đến muộn",
+        "slug": "em-la-niem-vui-den-muon",
+        "origin_name": "You Are My Fateful Love",
+        "alternative_names": [
+          "Ni Shi Chi Lai De Huan Xi",
+          "Ni shi chi lai de huan xi"
+        ],
+        "type": "series",
+        "thumb_url": "em-la-niem-vui-den-muon-thumb.jpg",
+        "poster_url": "em-la-niem-vui-den-muon-poster.jpg",
+        "sub_docquyen": false,
+        "chieurap": false,
+        "time": "? phút/tập",
+        "episode_current": "Tập 24",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2026,
+        "category": [
+          {
+            "id": "620f3d2b91fa4af90ab697fe",
+            "name": "Chính kịch",
+            "slug": "chinh-kich"
+          }
+        ],
+        "country": [
+          {
+            "id": "6401c9e1269d33eaed6b0535",
+            "name": "Chile",
+            "slug": "chile"
+          }
+        ],
+        "last_episodes": [
+          {
+            "server_name": "Vietsub #1",
+            "is_ai": false,
+            "name": "24"
+          }
+        ]
+      },
+      {
+        "tmdb": {
+          "type": "movie",
+          "id": "1052558",
+          "season": null,
+          "vote_average": 6.1,
+          "vote_count": 14
+        },
+        "imdb": {
+          "id": "tt11139374",
+          "vote_average": 3.4,
+          "vote_count": 334
+        },
+        "modified": {
+          "time": "2026-04-08T11:53:13Z"
+        },
+        "_id": "69d5df2fa54286c41ba25b12",
+        "name": "iPossessed",
+        "slug": "ipossessed",
+        "origin_name": "iPossessed",
+        "alternative_names": [
+          "El demonio que habita en mí",
+          "Poseido",
+          "O Demônio que Habita em Mim"
+        ],
+        "type": "single",
+        "thumb_url": "ipossessed-thumb.jpg",
+        "poster_url": "ipossessed-poster.jpg",
+        "sub_docquyen": false,
+        "chieurap": false,
+        "time": "104 Phút",
+        "episode_current": "Trailer",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2025,
+        "category": [
+          {
+            "id": "620a22ace0fc277084dfd531",
+            "name": "Kinh Dị",
+            "slug": "kinh-di"
+          }
+        ],
+        "country": [
+          {
+            "id": "620a231fe0fc277084dfd7ce",
+            "name": "Âu Mỹ",
+            "slug": "au-my"
+          }
+        ],
+        "last_episodes": []
+      },
+      {
+        "tmdb": {
+          "type": "movie",
+          "id": "1505611",
+          "season": null,
+          "vote_average": 7,
+          "vote_count": 2
+        },
+        "imdb": {
+          "id": "tt33061282",
+          "vote_average": 0,
+          "vote_count": 14
+        },
+        "modified": {
+          "time": "2026-04-08T11:51:51Z"
+        },
+        "_id": "69d5dee44a74b3cede09fc8f",
+        "name": "Bury Em Deep",
+        "slug": "bury-em-deep",
+        "origin_name": "Bury 'Em Deep",
+        "alternative_names": [
+          ""
+        ],
+        "type": "single",
+        "thumb_url": "bury-em-deep-thumb.jpg",
+        "poster_url": "bury-em-deep-poster.jpg",
+        "sub_docquyen": false,
+        "chieurap": false,
+        "time": "91 Phút",
+        "episode_current": "Trailer",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2025,
+        "category": [
+          {
+            "id": "620f3d2b91fa4af90ab697fe",
+            "name": "Chính kịch",
+            "slug": "chinh-kich"
+          }
+        ],
+        "country": [
+          {
+            "id": "620a231fe0fc277084dfd7ce",
+            "name": "Âu Mỹ",
+            "slug": "au-my"
+          }
+        ],
+        "last_episodes": []
+      },
+      {
+        "tmdb": {
+          "type": "tv",
+          "id": "278894",
+          "season": 1,
+          "vote_average": 9,
+          "vote_count": 1
+        },
+        "imdb": {
+          "id": "tt34903771",
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "modified": {
+          "time": "2026-04-08T11:51:44Z"
+        },
+        "_id": "69d5d574748ca16f085b0087",
+        "name": "Băng Hồ Trọng Sinh",
+        "slug": "bang-ho-trong-sinh",
+        "origin_name": "Rebirth",
+        "alternative_names": [
+          "楚乔: 冰湖重生",
+          "11處特工皇妃",
+          "Frozen Awakening",
+          "楚乔传2",
+          "Bing Hu Chong Sheng"
+        ],
+        "type": "series",
+        "thumb_url": "bang-ho-trong-sinh-thumb.jpg",
+        "poster_url": "bang-ho-trong-sinh-poster-1775621506761.jpg",
+        "sub_docquyen": false,
+        "chieurap": false,
+        "time": "? phút/tập",
+        "episode_current": "Tập 5",
+        "quality": "HD",
+        "lang": "Vietsub + Thuyết Minh",
+        "lang_key": [
+          "vs",
+          "tm"
+        ],
+        "year": 2026,
+        "category": [
+          {
+            "id": "620f3d2b91fa4af90ab697fe",
+            "name": "Chính kịch",
+            "slug": "chinh-kich"
+          }
+        ],
+        "country": [
+          {
+            "id": "62093063196e9f4ab6b448b8",
+            "name": "Trung Quốc",
+            "slug": "trung-quoc"
+          }
+        ],
+        "last_episodes": [
+          {
+            "server_name": "Vietsub #1",
+            "is_ai": false,
+            "name": "5"
+          },
+          {
+            "server_name": "Thuyết Minh #1",
+            "is_ai": false,
+            "name": "5"
+          }
+        ]
+      },
+      {
+        "tmdb": {
+          "type": "movie",
+          "id": "1404777",
+          "season": null,
+          "vote_average": 7.7,
+          "vote_count": 3
+        },
+        "imdb": {
+          "id": "tt35676748",
+          "vote_average": 0,
+          "vote_count": 30
+        },
+        "modified": {
+          "time": "2026-04-08T11:49:42Z"
+        },
+        "_id": "69d5d081b3a3583bbbac0c58",
+        "name": "Nụ Hôn Bạc Tỷ",
+        "slug": "nu-hon-bac-ty",
+        "origin_name": "Money Kisses",
+        "alternative_names": [
+          ""
+        ],
+        "type": "single",
+        "thumb_url": "nu-hon-bac-ty-thumb.jpg",
+        "poster_url": "nu-hon-bac-ty-poster.jpg",
+        "sub_docquyen": false,
+        "chieurap": false,
+        "time": "100 Phút",
+        "episode_current": "Full",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2025,
+        "category": [
+          {
+            "id": "620a221de0fc277084dfd1c1",
+            "name": "Hài Hước",
+            "slug": "hai-huoc"
+          }
+        ],
+        "country": [
+          {
+            "id": "63e0fd3ecaf0f6e22aeb0616",
+            "name": "Việt Nam",
+            "slug": "viet-nam"
+          }
+        ],
+        "last_episodes": [
+          {
+            "server_name": "Vietsub #1",
+            "is_ai": false,
+            "name": "Full"
+          }
+        ]
+      },
+      {
+        "tmdb": {
+          "type": "movie",
+          "id": "1400763",
+          "season": null,
+          "vote_average": 6.2,
+          "vote_count": 4
+        },
+        "imdb": {
+          "id": "tt34967068",
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "modified": {
+          "time": "2026-04-08T11:49:26Z"
+        },
+        "_id": "69d5de4fdb41bcecb8dd065f",
+        "name": "Touch Me",
+        "slug": "touch-me",
+        "origin_name": "Touch Me",
+        "alternative_names": [
+          "Um Toque de Outro Mundo",
+          "Dotknij mnie"
+        ],
+        "type": "single",
+        "thumb_url": "touch-me-thumb.jpg",
+        "poster_url": "touch-me-poster.jpg",
+        "sub_docquyen": false,
+        "chieurap": false,
+        "time": "99 Phút",
+        "episode_current": "Trailer",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2026,
+        "category": [
+          {
+            "id": "620a221de0fc277084dfd1c1",
+            "name": "Hài Hước",
+            "slug": "hai-huoc"
+          },
+          {
+            "id": "620a2282e0fc277084dfd435",
+            "name": "Viễn Tưởng",
+            "slug": "vien-tuong"
+          },
+          {
+            "id": "620a229be0fc277084dfd4dd",
+            "name": "Khoa Học",
+            "slug": "khoa-hoc"
+          },
+          {
+            "id": "620a22ace0fc277084dfd531",
+            "name": "Kinh Dị",
+            "slug": "kinh-di"
+          }
+        ],
+        "country": [
+          {
+            "id": "620a231fe0fc277084dfd7ce",
+            "name": "Âu Mỹ",
+            "slug": "au-my"
+          }
+        ],
+        "last_episodes": []
+      },
+      {
+        "tmdb": {
+          "type": "movie",
+          "id": "1301270",
+          "season": null,
+          "vote_average": 7.5,
+          "vote_count": 2
+        },
+        "imdb": {
+          "id": "tt29824649",
+          "vote_average": 0,
+          "vote_count": 0
+        },
+        "modified": {
+          "time": "2026-04-08T11:47:55Z"
+        },
+        "_id": "69d5ddf8f0f815b6660f8eff",
+        "name": "Skate to Hell",
+        "slug": "skate-to-hell",
+        "origin_name": "Skate to Hell",
+        "alternative_names": [
+          "Skate do Inferno",
+          "Катитесь в Ад"
+        ],
+        "type": "single",
+        "thumb_url": "skate-to-hell-thumb.jpg",
+        "poster_url": "skate-to-hell-poster.jpg",
+        "sub_docquyen": false,
+        "chieurap": false,
+        "time": "100 Phút",
+        "episode_current": "Trailer",
+        "quality": "HD",
+        "lang": "Vietsub",
+        "lang_key": [
+          "vs"
+        ],
+        "year": 2026,
+        "category": [
+          {
+            "id": "620a221de0fc277084dfd1c1",
+            "name": "Hài Hước",
+            "slug": "hai-huoc"
+          },
+          {
+            "id": "620a22ace0fc277084dfd531",
+            "name": "Kinh Dị",
+            "slug": "kinh-di"
+          }
+        ],
+        "country": [
+          {
+            "id": "620a231fe0fc277084dfd7ce",
+            "name": "Âu Mỹ",
+            "slug": "au-my"
+          }
+        ],
+        "last_episodes": []
+      }
+    ],
+    "params": {
+      "type_slug": "danh-sach",
+      "filterCategory": [
+        ""
+      ],
+      "filterCountry": [
+        ""
+      ],
+      "filterYear": "",
+      "filterType": "",
+      "sortField": "modified.time",
+      "sortType": "desc",
+      "pagination": {
+        "totalItems": 35165,
+        "totalItemsPerPage": 24,
+        "currentPage": 1,
+        "pageRanges": 5
+      }
+    },
+    "type_list": "phim-moi",
+    "APP_DOMAIN_FRONTEND": "https://ophim17.cc",
+    "APP_DOMAIN_CDN_IMAGE": "https://img.ophim.live"
+  }
+}
