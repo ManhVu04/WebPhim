@@ -10,17 +10,55 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);   // initial auth check
 
   // Persist tokens in sessionStorage (survives refresh, cleared on tab close)
+  // Verify token with backend on app load to ensure it's still valid
   useEffect(() => {
     const saved = sessionStorage.getItem('webphim_auth');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setAccessToken(parsed.accessToken);
-        setRefreshToken(parsed.refreshToken);
-        setUser(parsed.user);
-      } catch { /* ignore */ }
+        const accessToken = parsed.accessToken;
+        const storedRefreshToken = parsed.refreshToken;
+
+        // Verify access token with backend
+        apiGetMe(accessToken).then((userData) => {
+          if (userData && userData.username) {
+            // Token is valid, restore session
+            setAccessToken(accessToken);
+            setRefreshToken(storedRefreshToken);
+            setUser(userData);
+          } else {
+            // Token invalid/expired, try refresh
+            return apiRefreshToken(storedRefreshToken);
+          }
+        }).then((refreshed) => {
+          if (refreshed && refreshed.accessToken) {
+            // Refresh successful, update session
+            const newAuthData = {
+              accessToken: refreshed.accessToken,
+              refreshToken: refreshed.refreshToken,
+              user: { id: refreshed.id, username: refreshed.username, displayName: refreshed.displayName },
+            };
+            sessionStorage.setItem('webphim_auth', JSON.stringify(newAuthData));
+            setAccessToken(refreshed.accessToken);
+            setRefreshToken(refreshed.refreshToken);
+            setUser(newAuthData.user);
+          } else {
+            // Both tokens invalid, clear session
+            sessionStorage.removeItem('webphim_auth');
+          }
+        }).catch(() => {
+          // Token verification failed, clear session
+          sessionStorage.removeItem('webphim_auth');
+        }).finally(() => {
+          setLoading(false);
+        });
+      } catch {
+        sessionStorage.removeItem('webphim_auth');
+        setLoading(false);
+      }
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const saveAuth = useCallback((data) => {

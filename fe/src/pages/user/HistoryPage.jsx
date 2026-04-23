@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/auth.jsx';
 import { authFetch } from '../../lib/authApi.js';
 import { MovieCard } from '../../components/MovieCard.jsx';
@@ -7,6 +7,7 @@ import { Loading as State, ErrorState } from '../../components/State.jsx';
 
 export function HistoryPage() {
   const { accessToken } = useAuth();
+  const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -15,12 +16,15 @@ export function HistoryPage() {
     async function loadHistory() {
       try {
         setLoading(true);
-        // The endpoint from our Spring Boot backend
         const res = await authFetch('/api/history', accessToken);
-        if (res._error || res._unauthorized) {
+        // Handle unauthorized - redirect to login instead of showing error
+        if (res && res._unauthorized) {
+          navigate('/dang-nhap', { state: { from: { pathname: '/lich-su' } }, replace: true });
+          return;
+        }
+        if (res._error) {
           throw new Error('Không thể tải lịch sử xem phim');
         }
-        // Backend returns { items: [...], totalPages, totalItems, currentPage }
         setData(res.items || res || []);
       } catch (err) {
         setError(err.message);
@@ -30,7 +34,7 @@ export function HistoryPage() {
     }
 
     loadHistory();
-  }, [accessToken]);
+  }, [accessToken, navigate]);
 
   const handleClearAll = async () => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử xem phim?')) return;

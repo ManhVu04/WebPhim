@@ -63,4 +63,17 @@ public class UserService implements UserDetailsService {
     public User findById(String id) {
         return userRepository.findById(id).orElse(null);
     }
+
+    /**
+     * Revoke all existing tokens by incrementing the refresh token version.
+     * This effectively logs out the user from all devices.
+     */
+    public void revokeAllTokens(String userId) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user != null) {
+            int currentVersion = user.getRefreshTokenVersion();
+            user.setRefreshTokenVersion(currentVersion + 1);
+            userRepository.save(user);
+        }
+    }
 }
