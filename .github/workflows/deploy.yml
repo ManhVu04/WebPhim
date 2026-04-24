@@ -1,0 +1,202 @@
+name: Build And Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  JAVA_VERSION: "21"
+  NODE_VERSION: "20"
+  BACKEND_DIR: BEPhim
+  FRONTEND_DIR: fe
+  BACKEND_ARTIFACT_NAME: backend-jar
+  FRONTEND_ARTIFACT_NAME: frontend-dist
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      SPRING_DATA_MONGODB_URI: mongodb://127.0.0.1:27017/webphim?directConnection=true
+      VITE_API_BASE_URL: /api/ophim
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Make Maven wrapper executable
+        run: chmod +x ${{ env.BACKEND_DIR }}/mvnw
+
+      - name: Run backend tests
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: ./mvnw test
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ${{ env.FRONTEND_DIR }}/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: npm ci
+
+      - name: Run frontend lint
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: npm run lint
+
+      - name: Run frontend build
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: npm run build
+
+  build-artifacts:
+    runs-on: ubuntu-latest
+    needs: quality-check
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Make Maven wrapper executable
+        run: chmod +x ${{ env.BACKEND_DIR }}/mvnw
+
+      - name: Package backend
+        working-directory: ${{ env.BACKEND_DIR }}
+        run: ./mvnw -DskipTests package
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ${{ env.FRONTEND_DIR }}/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: /api/ophim
+
+      - name: Upload backend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BACKEND_ARTIFACT_NAME }}
+          path: ${{ env.BACKEND_DIR }}/target/*.jar
+          if-no-files-found: error
+
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.FRONTEND_ARTIFACT_NAME }}
+          path: ${{ env.FRONTEND_DIR }}/dist
+          if-no-files-found: error
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-artifacts
+
+    steps:
+      - name: Download backend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.BACKEND_ARTIFACT_NAME }}
+          path: deploy/backend
+
+      - name: Download frontend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.FRONTEND_ARTIFACT_NAME }}
+          path: deploy/frontend
+
+      - name: Prepare release directories on server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            RELEASE_ROOT="/tmp/webphim/releases/${{ github.sha }}"
+            mkdir -p "$RELEASE_ROOT/backend"
+            mkdir -p "$RELEASE_ROOT/frontend"
+
+      - name: Copy backend artifact to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "deploy/backend/*.jar"
+          target: "/tmp/webphim/releases/${{ github.sha }}/backend"
+
+      - name: Copy frontend artifact to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "deploy/frontend/dist"
+          target: "/tmp/webphim/releases/${{ github.sha }}/frontend"
+
+      - name: Activate release
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          SERVER_BACKEND_DIR: ${{ secrets.SERVER_BACKEND_DIR }}
+          SERVER_FRONTEND_DIR: ${{ secrets.SERVER_FRONTEND_DIR }}
+          BACKEND_SERVICE_NAME: ${{ secrets.BACKEND_SERVICE_NAME }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+
+            RELEASE_ROOT="/tmp/webphim/releases/${{ github.sha }}"
+            BACKEND_LIVE_DIR="${SERVER_BACKEND_DIR:-/opt/webphim/backend}"
+            FRONTEND_LIVE_DIR="${SERVER_FRONTEND_DIR:-/var/www/minishopecommerce.click/current}"
+            BACKEND_SERVICE_NAME="${BACKEND_SERVICE_NAME:-webphim}"
+
+            BACKEND_JAR="$(find "$RELEASE_ROOT/backend" -maxdepth 1 -name '*.jar' -print -quit)"
+            if [ -z "$BACKEND_JAR" ]; then
+              echo "Backend jar was not found in $RELEASE_ROOT/backend"
+              exit 1
+            fi
+
+            mkdir -p "$BACKEND_LIVE_DIR" "$FRONTEND_LIVE_DIR"
+            install -m 644 "$BACKEND_JAR" "$BACKEND_LIVE_DIR/webphim.jar"
+            rsync -a --delete "$RELEASE_ROOT/frontend/dist/" "$FRONTEND_LIVE_DIR/"
+
+            systemctl restart "$BACKEND_SERVICE_NAME"
+            systemctl reload nginx
