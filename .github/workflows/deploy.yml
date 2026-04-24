@@ -186,7 +186,8 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "deploy/backend/webphim.jar"
-          target: "/tmp/webphim/releases/${{ github.sha }}/backend"
+          target: "/tmp/webphim/releases/${{ github.sha }}"
+          strip_components: 1
 
       - name: Copy frontend artifact to server
         uses: appleboy/scp-action@v0.1.7
@@ -195,7 +196,8 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "deploy/frontend/dist"
-          target: "/tmp/webphim/releases/${{ github.sha }}/frontend"
+          target: "/tmp/webphim/releases/${{ github.sha }}"
+          strip_components: 1
 
       - name: Activate release
         uses: appleboy/ssh-action@v1.2.0
