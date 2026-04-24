@@ -5,13 +5,23 @@
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/api\/ophim$/, '') || '';
 
+async function parseApiResponse(res) {
+  const text = await res.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { message: text };
+  }
+}
+
 export async function apiLogin(username, password) {
   const res = await fetch(`${API_BASE}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
   });
-  const data = await res.json();
+  const data = await parseApiResponse(res);
   if (!res.ok) throw new Error(data.error || data.message || 'Login failed');
   return data; // { accessToken, refreshToken, expiresIn, id, username, displayName }
 }
@@ -22,7 +32,7 @@ export async function apiRegister(username, password, displayName) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password, displayName }),
   });
-  const data = await res.json();
+  const data = await parseApiResponse(res);
   if (!res.ok) throw new Error(data.error || data.message || 'Registration failed');
   return data; // same shape as login
 }
@@ -90,9 +100,8 @@ export async function authFetch(path, accessToken, options = {}) {
   }
 
   if (res.status === 401) return { _unauthorized: true };
-  const text = await res.text();
-  if (!text) return res.ok ? {} : { _error: true, status: res.status };
-  const data = JSON.parse(text);
+  const data = await parseApiResponse(res);
+  if (!Object.keys(data).length) return res.ok ? {} : { _error: true, status: res.status };
   if (!res.ok) throw new Error(data.error || data.message || `HTTP ${res.status}`);
   return data;
 }
