@@ -134,6 +134,22 @@ jobs:
           name: ${{ env.BACKEND_ARTIFACT_NAME }}
           path: deploy/backend
 
+      - name: Normalize backend artifact layout
+        run: |
+          set -e
+          if [ -f deploy/backend/webphim.jar ]; then
+            exit 0
+          fi
+
+          BACKEND_JAR="$(find deploy/backend -type f -name '*.jar' -print -quit)"
+          if [ -z "$BACKEND_JAR" ]; then
+            echo "Backend jar was not found in deploy/backend after download"
+            find deploy/backend -maxdepth 4 -print || true
+            exit 1
+          fi
+
+          cp "$BACKEND_JAR" deploy/backend/webphim.jar
+
       - name: Download frontend artifact
         uses: actions/download-artifact@v4
         with:
@@ -169,7 +185,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "deploy/backend/*.jar"
+          source: "deploy/backend/webphim.jar"
           target: "/tmp/webphim/releases/${{ github.sha }}/backend"
 
       - name: Copy frontend artifact to server
