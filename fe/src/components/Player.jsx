@@ -97,6 +97,7 @@ export function Player({ title, linkEmbed, linkM3u8 }) {
 function HlsVideo({ src }) {
   const videoRef = useRef(null)
   const [error, setError] = useState(null)
+  const [loadStatus, setLoadStatus] = useState('idle') // idle | loading | loaded | error
 
   const isNativeSupported = useMemo(() => {
     if (typeof document === 'undefined') return false
@@ -108,9 +109,11 @@ function HlsVideo({ src }) {
     const video = videoRef.current
     if (!video || !src) return
     setError(null)
+    setLoadStatus('idle')
 
     if (isNativeSupported) {
       video.src = src
+      setLoadStatus('loaded')
       return
     }
 
@@ -118,34 +121,49 @@ function HlsVideo({ src }) {
     let hls = null
 
     ;(async () => {
-      const mod = await import('hls.js')
-      const Hls = mod.default
+      setLoadStatus('loading')
+      try {
+        const mod = await import(/* @vite-ignore */ 'hls.js')
+        const Hls = mod.default
 
-      if (destroyed) return
-      if (!Hls?.isSupported?.()) {
-        setError('Trình duyệt không hỗ trợ phát HLS (m3u8). Hãy dùng Embed.')
-        return
-      }
-
-      hls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: true,
-      })
-
-      hls.attachMedia(video)
-      hls.on(Hls.Events.MEDIA_ATTACHED, () => {
-        hls.loadSource(src)
-      })
-      hls.on(Hls.Events.ERROR, (_e, data) => {
-        if (data?.fatal) {
-          setError('Không phát được link m3u8. Hãy thử Embed hoặc server khác.')
-          hls.destroy()
-          hls = null
+        if (destroyed) return
+        if (!Hls?.isSupported?.()) {
+          setError('Trình duyệt không hỗ trợ phát HLS (m3u8). Hãy dùng Embed.')
+          setLoadStatus('error')
+          return
         }
-      })
-    })().catch(() => {
-      setError('Không tải được bộ phát m3u8. Hãy dùng Embed.')
-    })
+
+        hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+        })
+
+        hls.attachMedia(video)
+        hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+          hls.loadSource(src)
+        })
+        hls.on(Hls.Events.ERROR, (_e, data) => {
+          if (data?.fatal) {
+            setError('Không phát được link m3u8. Hãy thử Embed hoặc server khác.')
+            hls.destroy()
+            hls = null
+            setLoadStatus('error')
+          }
+        })
+        setLoadStatus('loaded')
+      } catch (e) {
+        // Handle chunk load error (network, cache, etc.)
+        const msg = String(e?.message || e || '')
+        if (msg.includes('Failed to fetch') || msg.includes('Loading chunk')) {
+          setError('Không tải được bộ phát. Hãy thử tải lại trang hoặc dùng Embed.')
+        } else if (msg.includes('NetworkError') || msg.includes('net::')) {
+          setError('Lỗi mạng. Hãy kiểm tra kết nối internet.')
+        } else {
+          setError('Không tải được bộ phát m3u8. Hãy dùng Embed.')
+        }
+        setLoadStatus('error')
+      }
+    })()
 
     return () => {
       destroyed = true
@@ -157,7 +175,24 @@ function HlsVideo({ src }) {
     <>
       {error ? <div className="muted" style={{ marginBottom: 10 }}>{error}</div> : null}
       <div className="player">
-        <video ref={videoRef} controls playsInline />
+        {loadStatus === 'loading' ? (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            color: 'var(--text-muted)',
+            gap: 8
+          }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
+              <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+              <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
+            </svg>
+            Đang tải bộ phát...
+          </div>
+        ) : (
+          <video ref={videoRef} controls playsInline />
+        )}
       </div>
     </>
   )
