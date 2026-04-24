@@ -1,15 +1,7 @@
 <!-- gitnexus:start -->
-# WebPhim — Movie Streaming Platform
+# GitNexus — Code Intelligence
 
-A Vietnamese movie streaming web application with React frontend and Spring Boot backend.
-
-## Project Structure
-- **BEPhim/** — Spring Boot backend (OAuth2 auth, MongoDB)
-- **fe/** — React/Vite frontend (routing, components, pages)
-- **scripts/** — Build and utility scripts
-- **components/** — Shared React components
-
-This project is indexed by GitNexus as **WebPhim** (382 symbols, 808 relationships, 27 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **WebPhim** (406 symbols, 875 relationships, 29 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

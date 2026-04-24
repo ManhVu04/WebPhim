@@ -1,12 +1,9 @@
 package com.example.bephim.controller;
 
 import com.example.bephim.model.User;
+import com.example.bephim.service.RefreshTokenDenylistService;
 import com.example.bephim.service.UserService;
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.RSAKey;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.proc.SecurityContext;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,17 +13,35 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
+import java.util.HexFormat;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final JwtEncoder jwtEncoder;
-    private final JwtDecoder jwtDecoder;
+    private final JwtDecoder refreshTokenJwtDecoder;
+    private final RefreshTokenDenylistService refreshTokenDenylistService;
+
+    public AuthController(
+            UserService userService,
+            PasswordEncoder passwordEncoder,
+            JwtEncoder jwtEncoder,
+            @Qualifier("refreshTokenJwtDecoder") JwtDecoder refreshTokenJwtDecoder,
+            RefreshTokenDenylistService refreshTokenDenylistService) {
+        this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtEncoder = jwtEncoder;
+        this.refreshTokenJwtDecoder = refreshTokenJwtDecoder;
+        this.refreshTokenDenylistService = refreshTokenDenylistService;
+    }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Map<String, String> body) {
@@ -87,7 +102,7 @@ public class AuthController {
 
         try {
             // Validate the refresh token
-            Jwt decodedRefreshToken = jwtDecoder.decode(refreshToken);
+            Jwt decodedRefreshToken = refreshTokenJwtDecoder.decode(refreshToken);
 
             // Check if it's actually a refresh token
             String tokenType = decodedRefreshToken.getClaimAsString("tokenType");
@@ -106,6 +121,13 @@ public class AuthController {
                 return ResponseEntity.badRequest().body(Map.of("error", "User not found"));
             }
 
+            String refreshTokenKey = resolveRefreshTokenKey(refreshToken, decodedRefreshToken);
+
+            Instant refreshExpiresAt = decodedRefreshToken.getExpiresAt();
+            if (refreshExpiresAt == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid token: missing exp"));
+            }
+
             // Verify refresh token version matches (invalidate old tokens if version changed)
             Integer tokenVersion = decodedRefreshToken.getClaimAsString("refreshTokenVersion") != null
                 ? Integer.parseInt(decodedRefreshToken.getClaimAsString("refreshTokenVersion"))
@@ -113,6 +135,10 @@ public class AuthController {
             int userVersion = user.getRefreshTokenVersion();
             if (tokenVersion != userVersion) {
                 return ResponseEntity.status(401).body(Map.of("error", "Token revoked"));
+            }
+
+            if (!refreshTokenDenylistService.consume(refreshTokenKey, user.getId(), refreshExpiresAt)) {
+                return ResponseEntity.status(401).body(Map.of("error", "Refresh token already used"));
             }
 
             // Issue new tokens (version stays same since refresh successful)
@@ -152,6 +178,7 @@ public class AuthController {
                 .issuedAt(now)
                 .expiresAt(now.plus(7, ChronoUnit.DAYS))
                 .subject(user.getUsername())
+                .id(UUID.randomUUID().toString())
                 .claim("userId", user.getId())
                 .claim("tokenType", "refresh")
                 .claim("refreshTokenVersion", user.getRefreshTokenVersion())
@@ -166,5 +193,23 @@ public class AuthController {
                 "refreshToken", refreshToken,
                 "expiresIn", 900 // 15 min in seconds
         ));
+    }
+
+    private static String resolveRefreshTokenKey(String rawRefreshToken, Jwt decodedRefreshToken) {
+        String jti = decodedRefreshToken.getId();
+        if (jti != null && !jti.isBlank()) {
+            return "jti:" + jti;
+        }
+        return "fp:" + fingerprint(rawRefreshToken);
+    }
+
+    private static String fingerprint(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is not available", e);
+        }
     }
 }

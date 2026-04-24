@@ -1,8 +1,44 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+const DEFAULT_ALLOWED_PLAYER_HOSTS = [
+  'ophim.live',
+  'ophim.cc',
+  'ophim17.cc',
+  'phimapi.com',
+  'phim1280.tv',
+  'kkphim.vip',
+  'kkphim.cc',
+]
+
+const configuredAllowedHosts = String(import.meta.env.VITE_ALLOWED_PLAYER_HOSTS || '')
+  .split(',')
+  .map((host) => host.trim().toLowerCase())
+  .filter(Boolean)
+
+const allowedPlayerHosts = [...DEFAULT_ALLOWED_PLAYER_HOSTS, ...configuredAllowedHosts]
+
+function isAllowedPlayerUrl(url) {
+  if (!url) return false
+
+  try {
+    const parsed = new URL(String(url).trim())
+    if (parsed.protocol !== 'https:') return false
+
+    const hostname = parsed.hostname.toLowerCase()
+    return allowedPlayerHosts.some((allowedHost) => {
+      const normalized = allowedHost.replace(/^\*\./, '')
+      return hostname === normalized || hostname.endsWith(`.${normalized}`)
+    })
+  } catch {
+    return false
+  }
+}
+
 export function Player({ title, linkEmbed, linkM3u8 }) {
-  const canUseEmbed = Boolean(linkEmbed)
-  const canUseM3u8 = Boolean(linkM3u8)
+  const safeEmbedUrl = isAllowedPlayerUrl(linkEmbed) ? String(linkEmbed).trim() : ''
+  const safeM3u8Url = isAllowedPlayerUrl(linkM3u8) ? String(linkM3u8).trim() : ''
+  const canUseEmbed = Boolean(safeEmbedUrl)
+  const canUseM3u8 = Boolean(safeM3u8Url)
   const defaultMode = canUseEmbed ? 'embed' : canUseM3u8 ? 'm3u8' : null
   const [mode, setMode] = useState(defaultMode)
 
@@ -38,14 +74,15 @@ export function Player({ title, linkEmbed, linkM3u8 }) {
         <div className="player">
           <iframe
             title={title || 'player'}
-            src={linkEmbed}
-            allow="autoplay; fullscreen; picture-in-picture"
+            src={safeEmbedUrl}
+            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
             allowFullScreen
             referrerPolicy="no-referrer"
+            sandbox="allow-scripts allow-same-origin allow-presentation allow-fullscreen"
           />
         </div>
       ) : (
-        <HlsVideo src={linkM3u8} />
+        <HlsVideo src={safeM3u8Url} />
       )}
     </div>
   )
@@ -119,4 +156,3 @@ function HlsVideo({ src }) {
     </>
   )
 }
-

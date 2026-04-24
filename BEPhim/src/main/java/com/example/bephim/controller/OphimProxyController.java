@@ -23,6 +23,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequestMapping("/api/ophim")
 public class OphimProxyController {
 
+    private static final int MAX_CACHE_ENTRIES = 512;
+    private static final int MAX_CACHE_KEY_LENGTH = 2048;
+    private static final int MAX_CACHEABLE_BODY_CHARS = 2_000_000;
+
     private final RestClient ophimRestClient;
     private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
 
@@ -50,13 +54,17 @@ public class OphimProxyController {
 
         String cacheKey = relativePath + (request.getQueryString() == null ? "" : "?" + request.getQueryString());
         Duration ttl = ttlFor(relativePath);
-        if (!ttl.isZero()) {
+        boolean canCache = isCacheable(cacheKey, ttl);
+        if (canCache) {
             CacheEntry hit = cache.get(cacheKey);
             if (hit != null && !hit.isExpired()) {
                 return ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .header(HttpHeaders.CACHE_CONTROL, "public, max-age=" + ttl.toSeconds())
                         .body(hit.body);
+            }
+            if (hit != null) {
+                cache.remove(cacheKey, hit);
             }
         }
 
@@ -75,14 +83,52 @@ public class OphimProxyController {
 
         if (status == null) status = HttpStatusCode.valueOf(200);
 
-        if (!ttl.isZero() && status.is2xxSuccessful()) {
-            cache.put(cacheKey, new CacheEntry(body == null ? "" : body, System.currentTimeMillis(), ttl));
+        if (canCache && status.is2xxSuccessful()) {
+            putCacheEntry(cacheKey, body == null ? "" : body, ttl);
         }
 
         return ResponseEntity.status(status.value())
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .header(HttpHeaders.CACHE_CONTROL, !ttl.isZero() ? "public, max-age=" + ttl.toSeconds() : "no-store")
                 .body(body == null ? "" : body);
+    }
+
+    private void putCacheEntry(String cacheKey, String body, Duration ttl) {
+        if (body.length() > MAX_CACHEABLE_BODY_CHARS) {
+            return;
+        }
+        evictExpiredEntries();
+        evictOldestEntriesIfNeeded();
+        cache.put(cacheKey, new CacheEntry(body, System.currentTimeMillis(), ttl));
+    }
+
+    private void evictExpiredEntries() {
+        for (Map.Entry<String, CacheEntry> entry : cache.entrySet()) {
+            if (entry.getValue().isExpired()) {
+                cache.remove(entry.getKey(), entry.getValue());
+            }
+        }
+    }
+
+    private void evictOldestEntriesIfNeeded() {
+        while (cache.size() >= MAX_CACHE_ENTRIES) {
+            String oldestKey = null;
+            long oldestCreatedAt = Long.MAX_VALUE;
+            for (Map.Entry<String, CacheEntry> entry : cache.entrySet()) {
+                if (entry.getValue().createdAtMs < oldestCreatedAt) {
+                    oldestCreatedAt = entry.getValue().createdAtMs;
+                    oldestKey = entry.getKey();
+                }
+            }
+            if (oldestKey == null) {
+                return;
+            }
+            cache.remove(oldestKey);
+        }
+    }
+
+    private static boolean isCacheable(String cacheKey, Duration ttl) {
+        return !ttl.isZero() && cacheKey.length() <= MAX_CACHE_KEY_LENGTH;
     }
 
     private static Duration ttlFor(String relativePath) {
@@ -103,4 +149,3 @@ public class OphimProxyController {
         }
     }
 }
-
