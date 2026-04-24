@@ -108,6 +108,12 @@ export function MovieDetailPage() {
     }
   }, [slug])
 
+  const cdn = movie?.data?.APP_DOMAIN_CDN_IMAGE || movie?.data?.APP_DOMAIN_CDN || ''
+  const item = movie?.data?.item || movie?.data?.data?.item || movie?.data || null
+
+  const title = item?.name || item?.origin_name || slug
+  const poster = useMemo(() => buildPosterUrl(cdn, item?.poster_url, item?.thumb_url), [cdn, item])
+
   // Preload poster image khi data load xong
   useEffect(() => {
     if (!poster || posterPreloadedRef.current) return
@@ -115,12 +121,6 @@ export function MovieDetailPage() {
     img.onload = () => { posterPreloadedRef.current = true }
     img.src = poster
   }, [poster])
-
-  const cdn = movie?.data?.APP_DOMAIN_CDN_IMAGE || movie?.data?.APP_DOMAIN_CDN || ''
-  const item = movie?.data?.item || movie?.data?.data?.item || movie?.data || null
-
-  const title = item?.name || item?.origin_name || slug
-  const poster = useMemo(() => buildPosterUrl(cdn, item?.poster_url, item?.thumb_url), [cdn, item])
 
   // Không dùng hook sau các return sớm (tránh lỗi Rendered more hooks...)
   const categories = item ? joinNames(item.category) : ''
