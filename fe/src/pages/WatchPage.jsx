@@ -36,7 +36,7 @@ export function WatchPage() {
   const [serverIdx, setServerIdx] = useState(0)
   const [epIdx, setEpIdx] = useState(0)
   const [showAllEps, setShowAllEps] = useState(false)
-  const { user, accessToken } = useAuth()
+  const { accessToken } = useAuth()
 
   // Ref to track debounced history save
   const debouncedSaveHistory = useRef(
@@ -191,4 +191,3 @@ export function WatchPage() {
     </>
   )
 }
-
