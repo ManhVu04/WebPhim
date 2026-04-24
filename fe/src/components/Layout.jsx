@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState, useEffect } from 'react'
 import { Link, NavLink, Outlet, useNavigate, useSearchParams } from 'react-router-dom'
 import { ophimApi } from '../lib/api.js'
 import { SearchOverlay } from './SearchOverlay.jsx'
@@ -10,11 +10,42 @@ export function Layout() {
   const initial = params.get('keyword') || params.get('q') || ''
   const [q, setQ] = useState(initial)
   const [searchFocused, setSearchFocused] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const searchWrapperRef = useRef(null)
   const [open, setOpen] = useState(null) // 'danh-sach' | 'the-loai' | 'quoc-gia' | 'nam' | null
   const [cats, setCats] = useState([])
   const [countries, setCountries] = useState([])
   const [years, setYears] = useState([])
+
+  // Close mobile menu on resize to desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 760) {
+        setMobileMenuOpen(false)
+      }
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  // Load menu data when mobile menu opens
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      ensureCats()
+      ensureCountries()
+      ensureYears()
+    }
+  }, [mobileMenuOpen])
+
+  // Prevent body scroll when mobile menu open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [mobileMenuOpen])
 
   const navItems = useMemo(
     () => [
@@ -56,6 +87,7 @@ export function Layout() {
   }
 
   const closeSearch = useCallback(() => setSearchFocused(false), [])
+  const closeMobileMenu = useCallback(() => setMobileMenuOpen(false), [])
 
   return (
     <>
@@ -63,7 +95,7 @@ export function Layout() {
         <div className="container topbar-inner">
           <NavLink to="/" className="brand" aria-label="Trang chủ">
             <span className="brand-badge" aria-hidden="true" />
-            WebPhim
+            <span>WebPhim</span>
           </NavLink>
 
           <nav className="nav" aria-label="Điều hướng">
@@ -172,6 +204,20 @@ export function Layout() {
             </div>
           </nav>
 
+          {/* Mobile menu button */}
+          <button
+            className="mobile-menu-btn"
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="Mở menu"
+            aria-expanded={mobileMenuOpen}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+
           <div className="search-wrapper" ref={searchWrapperRef}>
             <form className="search" onSubmit={onSubmit} role="search">
               <span className="search-icon" aria-hidden="true">
@@ -200,6 +246,110 @@ export function Layout() {
           <UserMenu />
         </div>
       </header>
+
+      {/* Mobile menu overlay */}
+      <div
+        className={`mobile-menu-overlay${mobileMenuOpen ? ' open' : ''}`}
+        onClick={closeMobileMenu}
+        aria-hidden="true"
+      />
+
+      {/* Mobile menu panel */}
+      <nav className={`mobile-menu-panel${mobileMenuOpen ? ' open' : ''}`} aria-label="Menu di động">
+        <div className="mobile-menu-header">
+          <div className="brand" style={{ margin: 0 }}>
+            <span className="brand-badge" aria-hidden="true" />
+            <span>WebPhim</span>
+          </div>
+          <button className="mobile-menu-close" onClick={closeMobileMenu} aria-label="Đóng menu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div className="mobile-menu-section">
+          <Link to="/" className="mobile-menu-link" onClick={closeMobileMenu}>
+            Trang chủ
+          </Link>
+        </div>
+
+        <div className="mobile-menu-section">
+          <div className="mobile-menu-section-title">Danh sách</div>
+          <div className="mobile-menu-grid">
+            <Link to="/danh-sach/phim-moi?page=1" className="mobile-menu-grid-item" onClick={closeMobileMenu}>
+              Phim mới
+            </Link>
+            <Link to="/danh-sach/phim-le?page=1" className="mobile-menu-grid-item" onClick={closeMobileMenu}>
+              Phim lẻ
+            </Link>
+            <Link to="/danh-sach/phim-bo?page=1" className="mobile-menu-grid-item" onClick={closeMobileMenu}>
+              Phim bộ
+            </Link>
+            <Link to="/danh-sach/hoat-hinh?page=1" className="mobile-menu-grid-item" onClick={closeMobileMenu}>
+              Hoạt hình
+            </Link>
+          </div>
+        </div>
+
+        <div className="mobile-menu-section">
+          <div className="mobile-menu-section-title">Thể loại</div>
+          <div className="mobile-menu-grid">
+            {cats.slice(0, 8).map((c) => (
+              <Link
+                key={c.id || c.slug}
+                to={`/the-loai/${c.slug}`}
+                className="mobile-menu-grid-item"
+                onClick={async () => {
+                  if (!cats.length) await ensureCats()
+                  closeMobileMenu()
+                }}
+              >
+                {c.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="mobile-menu-section">
+          <div className="mobile-menu-section-title">Quốc gia</div>
+          <div className="mobile-menu-grid">
+            {countries.slice(0, 8).map((c) => (
+              <Link
+                key={c.id || c.slug}
+                to={`/quoc-gia/${c.slug}`}
+                className="mobile-menu-grid-item"
+                onClick={async () => {
+                  if (!countries.length) await ensureCountries()
+                  closeMobileMenu()
+                }}
+              >
+                {c.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="mobile-menu-section">
+          <div className="mobile-menu-section-title">Năm phát hành</div>
+          <div className="mobile-menu-grid">
+            {years.slice(0, 6).map((y) => (
+              <Link
+                key={y}
+                to={`/nam-phat-hanh/${y}?page=1`}
+                className="mobile-menu-grid-item"
+                onClick={async () => {
+                  if (!years.length) await ensureYears()
+                  closeMobileMenu()
+                }}
+              >
+                {y}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </nav>
 
       <main className="content">
         <div className="container">
