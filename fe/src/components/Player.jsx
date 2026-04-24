@@ -8,6 +8,7 @@ const DEFAULT_ALLOWED_PLAYER_HOSTS = [
   'phim1280.tv',
   'kkphim.vip',
   'kkphim.cc',
+  'opstream*.com',
 ]
 
 const configuredAllowedHosts = String(import.meta.env.VITE_ALLOWED_PLAYER_HOSTS || '')
@@ -17,6 +18,14 @@ const configuredAllowedHosts = String(import.meta.env.VITE_ALLOWED_PLAYER_HOSTS 
 
 const allowedPlayerHosts = [...DEFAULT_ALLOWED_PLAYER_HOSTS, ...configuredAllowedHosts]
 
+function matchesAllowedHost(hostname, allowedHost) {
+  const normalized = allowedHost.replace(/^\*\./, '')
+  if (allowedHost === 'opstream*.com') {
+    return /^(.+\.)?opstream\d+\.com$/.test(hostname)
+  }
+  return hostname === normalized || hostname.endsWith(`.${normalized}`)
+}
+
 function isAllowedPlayerUrl(url) {
   if (!url) return false
 
@@ -25,10 +34,7 @@ function isAllowedPlayerUrl(url) {
     if (parsed.protocol !== 'https:') return false
 
     const hostname = parsed.hostname.toLowerCase()
-    return allowedPlayerHosts.some((allowedHost) => {
-      const normalized = allowedHost.replace(/^\*\./, '')
-      return hostname === normalized || hostname.endsWith(`.${normalized}`)
-    })
+    return allowedPlayerHosts.some((allowedHost) => matchesAllowedHost(hostname, allowedHost))
   } catch {
     return false
   }

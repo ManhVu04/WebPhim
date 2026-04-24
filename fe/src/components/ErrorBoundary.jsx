@@ -10,6 +10,26 @@ export class ErrorBoundary extends Component {
     return { error }
   }
 
+  componentDidMount() {
+    sessionStorage.removeItem('webphim_chunk_reload')
+  }
+
+  componentDidCatch(error) {
+    const message = String(error?.message || error || '')
+    const isChunkLoadError =
+      message.includes('Failed to fetch dynamically imported module') ||
+      message.includes('Importing a module script failed') ||
+      message.includes('Loading chunk')
+
+    if (isChunkLoadError && sessionStorage.getItem('webphim_chunk_reload') !== '1') {
+      sessionStorage.setItem('webphim_chunk_reload', '1')
+      window.location.reload()
+      return
+    }
+
+    sessionStorage.removeItem('webphim_chunk_reload')
+  }
+
   render() {
     if (this.state.error) {
       return (
@@ -24,4 +44,3 @@ export class ErrorBoundary extends Component {
     return this.props.children
   }
 }
-
