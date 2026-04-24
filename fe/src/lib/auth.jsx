@@ -3,6 +3,25 @@ import { apiLogin, apiRegister, apiGetMe, apiRefreshToken } from './authApi.js';
 
 const AuthContext = createContext(null);
 
+// Decode JWT payload without verification (for expiry check only)
+function decodeJwtPayload(token) {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+// Check if token is expired (exp claim is Unix timestamp in seconds)
+function isTokenExpired(exp) {
+  if (!exp) return true;
+  // Add 30s buffer to avoid edge cases near expiry
+  return (exp * 1000) < (Date.now() - 30000);
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);        // { id, username, displayName }
   const [accessToken, setAccessToken] = useState(null);
@@ -19,39 +38,60 @@ export function AuthProvider({ children }) {
         const accessToken = parsed.accessToken;
         const storedRefreshToken = parsed.refreshToken;
 
-        // Verify access token with backend
-        apiGetMe(accessToken).then((userData) => {
-          if (userData && userData.username) {
-            // Token is valid, restore session
-            setAccessToken(accessToken);
-            setRefreshToken(storedRefreshToken);
-            setUser(userData);
-          } else {
-            // Token invalid/expired, try refresh
-            return apiRefreshToken(storedRefreshToken);
-          }
-        }).then((refreshed) => {
-          if (refreshed && refreshed.accessToken) {
-            // Refresh successful, update session
-            const newAuthData = {
-              accessToken: refreshed.accessToken,
-              refreshToken: refreshed.refreshToken,
-              user: { id: refreshed.id, username: refreshed.username, displayName: refreshed.displayName },
-            };
-            sessionStorage.setItem('webphim_auth', JSON.stringify(newAuthData));
-            setAccessToken(refreshed.accessToken);
-            setRefreshToken(refreshed.refreshToken);
-            setUser(newAuthData.user);
-          } else {
-            // Both tokens invalid, clear session
+        // Check access token expiry locally first (avoid unnecessary API calls)
+        const payload = decodeJwtPayload(accessToken);
+        const expired = !payload || isTokenExpired(payload.exp);
+
+        if (expired) {
+          // Access token expired, try refresh
+          apiRefreshToken(storedRefreshToken).then((refreshed) => {
+            if (refreshed && refreshed.accessToken) {
+              // Refresh successful, update session immediately
+              const newAuthData = {
+                accessToken: refreshed.accessToken,
+                refreshToken: refreshed.refreshToken,
+                user: { id: refreshed.id, username: refreshed.username, displayName: refreshed.displayName },
+              };
+              sessionStorage.setItem('webphim_auth', JSON.stringify(newAuthData));
+              setAccessToken(refreshed.accessToken);
+              setRefreshToken(refreshed.refreshToken);
+              setUser(newAuthData.user);
+            } else {
+              // Refresh failed, clear session
+              sessionStorage.removeItem('webphim_auth');
+            }
+          }).catch(() => {
+            // Refresh failed, clear session
             sessionStorage.removeItem('webphim_auth');
+          }).finally(() => {
+            setLoading(false);
+          });
+        } else {
+          // Access token still valid, restore session (verify with backend in background)
+          setAccessToken(accessToken);
+          setRefreshToken(storedRefreshToken);
+          if (parsed.user) {
+            setUser(parsed.user);
           }
-        }).catch(() => {
-          // Token verification failed, clear session
-          sessionStorage.removeItem('webphim_auth');
-        }).finally(() => {
-          setLoading(false);
-        });
+          // Verify with backend asynchronously
+          apiGetMe(accessToken).then((userData) => {
+            if (userData && userData.username) {
+              // Token still valid, update user data if needed
+              setUser(userData);
+            } else {
+              // Token actually invalid, clear session
+              sessionStorage.removeItem('webphim_auth');
+              setUser(null);
+              setAccessToken(null);
+              setRefreshToken(null);
+            }
+          }).catch(() => {
+            // Verify failed, but token might still be valid - keep session
+            // Will retry on next request via authFetch
+          }).finally(() => {
+            setLoading(false);
+          });
+        }
       } catch {
         sessionStorage.removeItem('webphim_auth');
         setLoading(false);

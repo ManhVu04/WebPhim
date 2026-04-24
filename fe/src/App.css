@@ -695,6 +695,22 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
+/* Blur placeholder for LQIP effect */
+.lazy-img--placeholder-blur {
+  background-size: cover !important;
+  background-position: center !important;
+  filter: blur(10px);
+  transform: scale(1.05); /* Prevent blur edges showing */
+}
+
+/* Blur placeholder for LQIP effect */
+.lazy-img--placeholder-blur {
+  background-size: cover !important;
+  background-position: center !important;
+  filter: blur(10px);
+  transform: scale(1.05); /* Prevent blur edges showing */
+}
+
 /* ── Auth Pages ───────────────────────── */
 .auth-container {
   display: flex;

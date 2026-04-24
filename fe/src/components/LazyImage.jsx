@@ -6,6 +6,7 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react'
  *  - Smooth fade-in on load
  *  - Auto-retry once on error
  *  - Gradient placeholder fallback on persistent failure
+ *  - Blur placeholder (LQIP) for smooth transitions
  */
 export const LazyImage = memo(function LazyImage({
   src,
@@ -13,6 +14,7 @@ export const LazyImage = memo(function LazyImage({
   className = '',
   priority = false,
   style,
+  placeholderSrc, // Optional: tiny blur image URL for LQIP effect
 }) {
   const imgRef = useRef(null)
   const [visible, setVisible] = useState(priority) // priority = render immediately
@@ -71,11 +73,19 @@ export const LazyImage = memo(function LazyImage({
     return <div className={`lazy-img lazy-img--placeholder ${className}`} style={style} />
   }
 
+  // Build low-quality placeholder URL (wsrv supports &lqip parameter)
+  const placeholderUrl = placeholderSrc || (src.includes('wsrv.nl') && !src.includes('&lqip=')
+    ? `${src}&lqip=10`
+    : null)
+
   return (
     <div
       ref={imgRef}
-      className={`lazy-img ${loaded ? 'lazy-img--loaded' : ''} ${failed ? 'lazy-img--failed' : ''} ${className}`}
-      style={style}
+      className={`lazy-img ${loaded ? 'lazy-img--loaded' : ''} ${failed ? 'lazy-img--failed' : ''} ${placeholderUrl && !loaded ? 'lazy-img--placeholder-blur' : ''} ${className}`}
+      style={{
+        ...style,
+        ...(placeholderUrl && !loaded ? { backgroundImage: `url(${placeholderUrl})` } : {}),
+      }}
       data-loaded={loaded ? '1' : '0'}
     >
       {visible && !failed && (

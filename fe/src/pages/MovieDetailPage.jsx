@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ophimApi } from '../lib/api.js'
 import { buildPosterUrl, buildThumbUrl } from '../lib/image.js'
@@ -27,6 +27,7 @@ export function MovieDetailPage() {
   const { user, accessToken } = useAuth()
   const [isFavorite, setIsFavorite] = useState(false)
   const [favLoading, setFavLoading] = useState(false)
+  const posterPreloadedRef = useRef(false)
 
   // Check if movie is in favorites
   useEffect(() => {
@@ -106,6 +107,14 @@ export function MovieDetailPage() {
       alive = false
     }
   }, [slug])
+
+  // Preload poster image khi data load xong
+  useEffect(() => {
+    if (!poster || posterPreloadedRef.current) return
+    const img = new Image()
+    img.onload = () => { posterPreloadedRef.current = true }
+    img.src = poster
+  }, [poster])
 
   const cdn = movie?.data?.APP_DOMAIN_CDN_IMAGE || movie?.data?.APP_DOMAIN_CDN || ''
   const item = movie?.data?.item || movie?.data?.data?.item || movie?.data || null

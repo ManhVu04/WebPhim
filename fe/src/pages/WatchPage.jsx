@@ -37,6 +37,7 @@ export function WatchPage() {
   const [epIdx, setEpIdx] = useState(0)
   const [showAllEps, setShowAllEps] = useState(false)
   const { accessToken } = useAuth()
+  const prefetchedEpRef = useRef(new Set())
 
   // Ref to track debounced history save
   const debouncedSaveHistory = useRef(
@@ -102,6 +103,29 @@ export function WatchPage() {
     setShowAllEps(false)
   }, [safeServerIdx, safeEpIdx, slug])
 
+  // Prefetch poster image và episodes liền kề khi data load xong
+  useEffect(() => {
+    if (!item) return
+    // Preload poster image
+    const posterUrl = buildPosterUrl(cdnBase, item.poster_url, item.thumb_url)
+    if (posterUrl) {
+      const img = new Image()
+      img.src = posterUrl
+    }
+    // Preload episodes gần đó (prev/next)
+    const epToPreload = [
+      safeEpIdx > 0 ? safeEpIdx - 1 : null,
+      safeEpIdx < serverData.length - 1 ? safeEpIdx + 1 : null,
+    ].filter(Boolean)
+    epToPreload.forEach(idx => {
+      if (!prefetchedEpRef.current.has(idx)) {
+        prefetchedEpRef.current.add(idx)
+        // Prefetch movie data để có episodes list sẵn
+        ophimApi.movie(slug).catch(() => {})
+      }
+    })
+  }, [item, safeEpIdx, serverData.length, slug, cdnBase])
+
   // Keep URL in sync when user changes
   useEffect(() => {
     if (serverIdx === qServer && epIdx === qEp) return
@@ -165,17 +189,30 @@ export function WatchPage() {
           <div style={{ fontWeight: 800, marginTop: 14, marginBottom: 10 }}>Chọn tập</div>
           {visibleEps.length ? (
             <div className="episodes">
-              {visibleEps.map((ep, i) => (
+              {visibleEps.map((ep, i) => {
+                // Preload episodes liền kề khi hover
+                const handleMouseEnter = () => {
+                  const adjacent = [i - 1, i + 1].filter(idx => idx >= 0 && idx < serverData.length)
+                  adjacent.forEach(idx => {
+                    if (!prefetchedEpRef.current.has(idx)) {
+                      prefetchedEpRef.current.add(idx)
+                      // Prefetch movie data để có episodes data sẵn
+                      ophimApi.movie(slug).catch(() => {})
+                    }
+                  })
+                }
+                return (
                 <button
                   key={ep.slug || ep.name || i}
                   type="button"
                   className={`epBtn${i === epIdx ? ' active' : ''}`}
                   onClick={() => setEpIdx(i)}
+                  onMouseEnter={handleMouseEnter}
                   title={ep.filename || ep.name}
                 >
                   {ep.name || `Tập ${i + 1}`}
                 </button>
-              ))}
+              )})}
 
               {!showAllEps && serverData.length > visibleEps.length ? (
                 <button className="epBtn" type="button" onClick={() => setShowAllEps(true)}>

@@ -8,13 +8,19 @@ export const MovieCard = memo(function MovieCard({ cdnBase, item, priority }) {
   const thumb = buildThumbUrl(cdnBase, item?.thumb_url)
   const title = item?.name || item?.origin_name || item?.slug
   const prefetched = useRef(false)
+  const imagePreloadRef = useRef(null)
 
   const handleMouseEnter = useCallback(() => {
     if (!prefetched.current && item?.slug) {
       prefetched.current = true
       prefetchMovie(item.slug)
     }
-  }, [item?.slug])
+    // Preload ảnh ngay khi hover (nhanh hơn IntersectionObserver)
+    if (thumb && !imagePreloadRef.current) {
+      imagePreloadRef.current = new Image()
+      imagePreloadRef.current.src = thumb
+    }
+  }, [item?.slug, thumb])
 
   return (
     <Link

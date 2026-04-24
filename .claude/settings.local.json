@@ -72,7 +72,8 @@
       "Bash(git push *)",
       "Bash(java *)",
       "Bash(.\\\\mvnw.cmd -version)",
-      "Bash(./mvnw.cmd spring-boot:run)"
+      "Bash(./mvnw.cmd spring-boot:run)",
+      "mcp__gitnexus__detect_changes"
     ]
   }
 }
