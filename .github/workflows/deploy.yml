@@ -140,6 +140,17 @@ jobs:
           name: ${{ env.FRONTEND_ARTIFACT_NAME }}
           path: deploy/frontend
 
+      - name: Normalize frontend artifact layout
+        run: |
+          set -e
+          if [ -d deploy/frontend/dist ]; then
+            exit 0
+          fi
+
+          mkdir -p deploy/frontend/dist
+          shopt -s dotglob nullglob
+          mv deploy/frontend/* deploy/frontend/dist/ || true
+
       - name: Prepare release directories on server
         uses: appleboy/ssh-action@v1.2.0
         with:
