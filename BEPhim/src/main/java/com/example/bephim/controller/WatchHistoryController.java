@@ -39,7 +39,7 @@ public class WatchHistoryController {
         ));
     }
 
-    @PostMapping
+    @PostMapping({"", "/"})
     public ResponseEntity<?> record(
             @AuthenticationPrincipal Jwt jwt,
             @RequestBody Map<String, Object> body) {

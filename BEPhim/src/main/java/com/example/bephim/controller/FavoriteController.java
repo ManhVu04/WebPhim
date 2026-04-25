@@ -39,7 +39,7 @@ public class FavoriteController {
         ));
     }
 
-    @PostMapping
+    @PostMapping({"", "/"})
     public ResponseEntity<?> add(
             @AuthenticationPrincipal Jwt jwt,
             @RequestBody Map<String, Object> body) {

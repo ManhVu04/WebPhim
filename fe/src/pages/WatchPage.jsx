@@ -38,15 +38,21 @@ export function WatchPage() {
   const [showAllEps, setShowAllEps] = useState(false)
   const { accessToken } = useAuth()
   const prefetchedEpRef = useRef(new Set())
+  const accessTokenRef = useRef(accessToken)
 
-  // Ref to track debounced history save
+  useEffect(() => {
+    accessTokenRef.current = accessToken
+  }, [accessToken])
+
   const debouncedSaveHistory = useRef(
     debounce((data) => {
-      authFetch('/api/history', accessToken, {
+      const token = accessTokenRef.current
+      if (!token) return
+      authFetch('/api/history', token, {
         method: 'POST',
         body: JSON.stringify(data)
       }).catch(err => console.error('Error saving history:', err));
-    }, 1000) // 1 second debounce
+    }, 1000)
   );
 
   useEffect(() => {
