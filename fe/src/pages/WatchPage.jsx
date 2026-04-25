@@ -38,22 +38,9 @@ export function WatchPage() {
   const [showAllEps, setShowAllEps] = useState(false)
   const { accessToken } = useAuth()
   const prefetchedEpRef = useRef(new Set())
-  const accessTokenRef = useRef(accessToken)
 
-  useEffect(() => {
-    accessTokenRef.current = accessToken
-  }, [accessToken])
-
-  const debouncedSaveHistory = useRef(
-    debounce((data) => {
-      const token = accessTokenRef.current
-      if (!token) return
-      authFetch('/api/history', token, {
-        method: 'POST',
-        body: JSON.stringify(data)
-      }).catch(err => console.error('Error saving history:', err));
-    }, 1000)
-  );
+  // Debounced history save - use lazy ref initialization
+  const debouncedSaveHistory = useRef(null)
 
   useEffect(() => {
     let alive = true
@@ -86,6 +73,17 @@ export function WatchPage() {
 
   // Record history whenever user enters/changes episode (debounced to prevent API spam)
   useEffect(() => {
+    // Lazy init the debounced function on first render
+    if (!debouncedSaveHistory.current) {
+      debouncedSaveHistory.current = debounce((data) => {
+        if (!accessToken) return
+        authFetch('/api/history', accessToken, {
+          method: 'POST',
+          body: JSON.stringify(data)
+        }).catch(err => console.error('Error saving history:', err));
+      }, 1000)
+    }
+
     if (!accessToken || !item || !currentEp) return;
 
     debouncedSaveHistory.current({
