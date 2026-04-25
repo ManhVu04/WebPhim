@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { ophimApi } from '../lib/api.js'
 import { MovieGrid } from '../components/MovieGrid.jsx'
 import { ErrorState, Loading } from '../components/State.jsx'
@@ -49,14 +49,35 @@ export function ListPage() {
   const pagination = data?.data?.params?.pagination
 
   return (
-    <>
-      <div className="section-title">
-        <h1>{title}</h1>
-        <div className="muted">{items.length} phim</div>
-      </div>
+    <div className="list-page-shell">
+      <section className="hero-hero panel">
+        <div className="hero-copy">
+          <p className="eyebrow">{title}</p>
+          <h1>Kho phim hiện đại, rõ ràng, tối giản.</h1>
+          <p className="hero-lead">
+            Một bố cục đen trắng mạnh tay, nhiều khoảng thở, tập trung vào nội dung và khả năng lướt nhanh.
+          </p>
+        </div>
+        <div className="hero-meta">
+          <div>
+            <span className="hero-meta-label">Hiện có</span>
+            <strong>{items.length} phim</strong>
+          </div>
+          <div>
+            <span className="hero-meta-label">Trang</span>
+            <strong>{page}</strong>
+          </div>
+        </div>
+        <div className="hero-links">
+          <Link to="/danh-sach/phim-moi?page=1" className="hero-link">Phim mới</Link>
+          <Link to="/danh-sach/phim-bo?page=1" className="hero-link">Phim bộ</Link>
+          <Link to="/the-loai" className="hero-link">Thể loại</Link>
+          <Link to="/quoc-gia" className="hero-link">Quốc gia</Link>
+        </div>
+      </section>
       <MovieGrid cdnBase={cdn} items={items} />
       <Pagination pagination={pagination} />
-    </>
+    </div>
   )
 }
 

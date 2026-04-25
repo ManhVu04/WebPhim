@@ -25,7 +25,7 @@ function cacheSet(key, val) {
   searchCache.set(key, val)
 }
 
-export function SearchOverlay({ query, onClose }) {
+export function SearchOverlay({ query, onClose, containerRef }) {
   const [results, setResults] = useState([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -94,7 +94,8 @@ export function SearchOverlay({ query, onClose }) {
   // Close on click outside
   useEffect(() => {
     function handleClick(e) {
-      if (overlayRef.current && !overlayRef.current.contains(e.target)) {
+      const container = containerRef?.current || overlayRef.current
+      if (container && !container.contains(e.target)) {
         onClose()
       }
     }

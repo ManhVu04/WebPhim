@@ -44,16 +44,16 @@ export function SearchPage() {
   const pagination = data?.data?.params?.pagination
 
   return (
-    <>
-      <div className="section-title">
+    <div className="search-page-shell">
+      <div className="section-title search-page-header">
         <h2>Kết quả tìm kiếm</h2>
-        <div className="muted">
+        <div className="search-page-summary muted">
           Từ khóa: <b>{keyword}</b>
         </div>
       </div>
       <MovieGrid cdnBase={cdn} items={items} />
       <Pagination pagination={pagination} />
-    </>
+    </div>
   )
 }
 

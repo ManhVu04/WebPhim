@@ -37,15 +37,16 @@ export function Layout() {
     }
   }, [mobileMenuOpen])
 
-  // Prevent body scroll when mobile menu open
+  // Prevent body scroll when overlays open
   useEffect(() => {
-    if (mobileMenuOpen) {
+    const isMobileSearchOpen = window.matchMedia('(max-width: 600px)').matches && searchFocused && q.trim()
+    if (mobileMenuOpen || isMobileSearchOpen) {
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = ''
     }
     return () => { document.body.style.overflow = '' }
-  }, [mobileMenuOpen])
+  }, [mobileMenuOpen, searchFocused, q])
 
   const navItems = useMemo(
     () => [
@@ -218,7 +219,7 @@ export function Layout() {
             </svg>
           </button>
 
-          <div className="search-wrapper" ref={searchWrapperRef}>
+          <div className={`search-wrapper${searchFocused && q.trim() ? ' search-wrapper-active' : ''}`} ref={searchWrapperRef}>
             <form className="search" onSubmit={onSubmit} role="search">
               <span className="search-icon" aria-hidden="true">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -241,7 +242,7 @@ export function Layout() {
                 </button>
               )}
             </form>
-            {searchFocused && <SearchOverlay query={q} onClose={closeSearch} />}
+            {searchFocused && <SearchOverlay query={q} onClose={closeSearch} containerRef={searchWrapperRef} />}
           </div>
           <UserMenu />
         </div>
