@@ -38,7 +38,11 @@ export function FavoritesPage() {
 
   const handleRemove = async (movieSlug) => {
     try {
-      await authFetch(`/api/favorites/${movieSlug}`, accessToken, { method: 'DELETE' });
+      const res = await authFetch(`/api/favorites/${movieSlug}`, accessToken, { method: 'DELETE' });
+      if (res && res._unauthorized) {
+        navigate('/dang-nhap', { state: { from: { pathname: '/yeu-thich' } }, replace: true });
+        return;
+      }
       setData(prev => prev.filter(item => item.movieSlug !== movieSlug));
     } catch (err) {
       console.error('Failed to remove favorite:', err);

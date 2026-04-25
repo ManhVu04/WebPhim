@@ -23,7 +23,13 @@ public class FavoriteController {
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "24") int size) {
+        if (jwt == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
+        }
         String userId = jwt.getClaimAsString("userId");
+        if (userId == null || userId.isBlank()) {
+            return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
+        }
         Page<Favorite> favorites = favoriteService.listFavorites(userId, page, size);
         return ResponseEntity.ok(Map.of(
                 "items", favorites.getContent(),
@@ -37,7 +43,13 @@ public class FavoriteController {
     public ResponseEntity<?> add(
             @AuthenticationPrincipal Jwt jwt,
             @RequestBody Map<String, Object> body) {
+        if (jwt == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
+        }
         String userId = jwt.getClaimAsString("userId");
+        if (userId == null || userId.isBlank()) {
+            return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
+        }
         String movieSlug = (String) body.get("movieSlug");
         if (movieSlug == null || movieSlug.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "movieSlug is required"));
@@ -57,7 +69,13 @@ public class FavoriteController {
     public ResponseEntity<?> remove(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable String slug) {
+        if (jwt == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
+        }
         String userId = jwt.getClaimAsString("userId");
+        if (userId == null || userId.isBlank()) {
+            return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
+        }
         favoriteService.removeFavorite(userId, slug);
         return ResponseEntity.ok(Map.of("removed", true));
     }
@@ -66,7 +84,13 @@ public class FavoriteController {
     public ResponseEntity<?> check(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable String slug) {
+        if (jwt == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
+        }
         String userId = jwt.getClaimAsString("userId");
+        if (userId == null || userId.isBlank()) {
+            return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
+        }
         boolean favorited = favoriteService.isFavorited(userId, slug);
         return ResponseEntity.ok(Map.of("favorited", favorited));
     }

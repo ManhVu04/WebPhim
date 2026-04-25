@@ -23,7 +23,13 @@ public class WatchHistoryController {
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "24") int size) {
+        if (jwt == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
+        }
         String userId = jwt.getClaimAsString("userId");
+        if (userId == null || userId.isBlank()) {
+            return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
+        }
         Page<WatchHistory> history = watchHistoryService.listHistory(userId, page, size);
         return ResponseEntity.ok(Map.of(
                 "items", history.getContent(),
@@ -37,7 +43,13 @@ public class WatchHistoryController {
     public ResponseEntity<?> record(
             @AuthenticationPrincipal Jwt jwt,
             @RequestBody Map<String, Object> body) {
+        if (jwt == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
+        }
         String userId = jwt.getClaimAsString("userId");
+        if (userId == null || userId.isBlank()) {
+            return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
+        }
         String movieSlug = (String) body.get("movieSlug");
         String episodeSlug = (String) body.getOrDefault("episodeSlug", "");
         int serverIndex = body.get("serverIndex") instanceof Number n ? n.intValue() : 0;
@@ -61,7 +73,13 @@ public class WatchHistoryController {
 
     @DeleteMapping
     public ResponseEntity<?> clear(@AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
+        }
         String userId = jwt.getClaimAsString("userId");
+        if (userId == null || userId.isBlank()) {
+            return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
+        }
         watchHistoryService.clearHistory(userId);
         return ResponseEntity.ok(Map.of("cleared", true));
     }
