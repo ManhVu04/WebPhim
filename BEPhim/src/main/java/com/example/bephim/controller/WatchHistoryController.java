@@ -18,7 +18,7 @@ public class WatchHistoryController {
 
     private final WatchHistoryService watchHistoryService;
 
-    @GetMapping
+    @GetMapping({"", "/"})
     public ResponseEntity<?> list(
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam(defaultValue = "0") int page,

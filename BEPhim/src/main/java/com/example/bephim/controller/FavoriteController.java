@@ -18,7 +18,7 @@ public class FavoriteController {
 
     private final FavoriteService favoriteService;
 
-    @GetMapping
+    @GetMapping({"", "/"})
     public ResponseEntity<?> list(
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam(defaultValue = "0") int page,
