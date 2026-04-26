@@ -68,12 +68,13 @@
       "Bash(git branch *)",
       "Bash(gh repo *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)",
       "Bash(git push *)",
       "Bash(java *)",
       "Bash(.\\\\mvnw.cmd -version)",
       "Bash(./mvnw.cmd spring-boot:run)",
-      "mcp__gitnexus__detect_changes"
+      "mcp__gitnexus__detect_changes",
+      "Bash(git commit *)"
     ]
-  }
+  },
+  "prefersReducedMotion": true
 }

@@ -26,13 +26,43 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+:root[data-theme='dark'] {
+  --bg: #101114;
+  --bg-2: #181a1f;
+  --panel: rgba(24, 26, 31, 0.86);
+  --panel-solid: #17191d;
+  --panel-2: rgba(31, 34, 40, 0.9);
+  --border: rgba(255, 244, 232, 0.1);
+  --text: #f6efe6;
+  --muted: rgba(246, 239, 230, 0.72);
+  --brand: #a95d44;
+  --brand-2: #c78b57;
+  --accent: #c9734f;
+  --accent-soft: rgba(201, 115, 79, 0.16);
+  --shadow: 0 24px 56px rgba(0, 0, 0, 0.34);
+  --shadow-soft: 0 16px 36px rgba(0, 0, 0, 0.24);
+  color-scheme: dark;
+  background:
+    radial-gradient(circle at 14% 0%, rgba(201, 115, 79, 0.12), transparent 28rem),
+    radial-gradient(circle at 86% 10%, rgba(104, 66, 47, 0.16), transparent 24rem),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+}
+
 * {
   box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
 }
 
 body {
   margin: 0;
   overflow-x: hidden;
+  color: var(--text);
+  background-color: var(--bg);
 }
 
 a {
