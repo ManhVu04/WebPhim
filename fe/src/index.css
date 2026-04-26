@@ -1,18 +1,26 @@
 :root {
-  --bg: #0f0f0f;
-  --panel: #181818;
-  --panel-2: #202020;
-  --border: rgba(255, 255, 255, 0.08);
-  --text: rgba(255, 255, 255, 0.96);
-  --muted: rgba(255, 255, 255, 0.68);
-  --brand: #ffffff;
-  --brand-2: #ffffff;
-  --shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+  --bg: #f4efe7;
+  --bg-2: #efe4d5;
+  --panel: rgba(255, 250, 241, 0.8);
+  --panel-solid: #fff8ec;
+  --panel-2: rgba(248, 236, 218, 0.84);
+  --border: rgba(92, 61, 34, 0.14);
+  --text: #24170f;
+  --muted: rgba(36, 23, 15, 0.62);
+  --brand: #b84a2b;
+  --brand-2: #e0a458;
+  --accent: #c85c32;
+  --accent-soft: rgba(200, 92, 50, 0.13);
+  --shadow: 0 18px 45px rgba(85, 48, 20, 0.12);
+  --shadow-soft: 0 10px 28px rgba(85, 48, 20, 0.08);
 
   font: 16px/150% system-ui, 'Segoe UI', Inter, Roboto, sans-serif;
-  color-scheme: dark;
+  color-scheme: light;
   color: var(--text);
-  background: linear-gradient(180deg, #0f0f0f 0%, #111111 100%);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(224, 164, 88, 0.22), transparent 32rem),
+    radial-gradient(circle at 88% 12%, rgba(184, 74, 43, 0.14), transparent 28rem),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

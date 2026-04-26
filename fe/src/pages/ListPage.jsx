@@ -53,9 +53,9 @@ export function ListPage() {
       <section className="hero-hero panel">
         <div className="hero-copy">
           <p className="eyebrow">{title}</p>
-          <h1>Kho phim hiện đại, rõ ràng, tối giản.</h1>
+          <h1>Kho phim nhẹ mắt, ấm áp và dễ xem hơn cho mọi thời điểm trong ngày.</h1>
           <p className="hero-lead">
-            Một bố cục đen trắng mạnh tay, nhiều khoảng thở, tập trung vào nội dung và khả năng lướt nhanh.
+            Khám phá phim với màu sắc dịu, bố cục rõ ràng và cảm giác thoải mái khi lướt lâu trên cả điện thoại lẫn màn hình lớn.
           </p>
         </div>
         <div className="hero-meta">
