@@ -1,18 +1,18 @@
 :root {
-  --bg: #f6f5f0;
-  --panel: rgba(255, 255, 255, 0.9);
-  --panel-2: rgba(17, 17, 17, 0.03);
-  --border: rgba(17, 17, 17, 0.08);
-  --text: rgba(17, 17, 17, 0.96);
-  --muted: rgba(17, 17, 17, 0.56);
-  --brand: #111111;
-  --brand-2: #111111;
-  --shadow: 0 10px 24px rgba(17, 17, 17, 0.04);
+  --bg: #0f0f0f;
+  --panel: #181818;
+  --panel-2: #202020;
+  --border: rgba(255, 255, 255, 0.08);
+  --text: rgba(255, 255, 255, 0.96);
+  --muted: rgba(255, 255, 255, 0.68);
+  --brand: #ffffff;
+  --brand-2: #ffffff;
+  --shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
 
   font: 16px/150% system-ui, 'Segoe UI', Inter, Roboto, sans-serif;
-  color-scheme: light;
+  color-scheme: dark;
   color: var(--text);
-  background: linear-gradient(180deg, #f8f7f3 0%, #f5f3ee 100%);
+  background: linear-gradient(180deg, #0f0f0f 0%, #111111 100%);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
