@@ -56,11 +56,12 @@ import java.util.UUID;
 @Configuration
 public class AuthorizationServerConfig {
 
-    private static final String ISSUER = "http://localhost:8080";
-
     @Bean
     @Order(1)
-    public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
+    public SecurityFilterChain authorizationServerSecurityFilterChain(
+            HttpSecurity http,
+            CorsConfigurationSource corsConfigurationSource,
+            @Value("${app.security.csp.allowed-frame-hosts:}") String allowedFrameHosts) throws Exception {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
                 new OAuth2AuthorizationServerConfigurer();
         http
@@ -72,20 +73,23 @@ public class AuthorizationServerConfig {
                 .exceptionHandling(exceptions -> exceptions
                         .defaultAuthenticationEntryPointFor(
                                 new LoginUrlAuthenticationEntryPoint("/login"),
-                                new MediaTypeRequestMatcher(MediaType.TEXT_HTML)));
+                                new MediaTypeRequestMatcher(MediaType.TEXT_HTML)))
+                .headers(headers -> SecurityHeadersConfig.applySecurityHeaders(headers, allowedFrameHosts));
 
         return http.build();
     }
 
     @Bean
-    public RegisteredClientRepository registeredClientRepository() {
+    public RegisteredClientRepository registeredClientRepository(
+            @Value("${app.auth.spa-redirect-uri}") String spaRedirectUri,
+            @Value("${app.auth.spa-post-logout-redirect-uri}") String spaPostLogoutRedirectUri) {
         RegisteredClient spaClient = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId("webphim-spa")
                 .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                .redirectUri("http://localhost:5173/callback")
-                .postLogoutRedirectUri("http://localhost:5173/")
+                .redirectUri(spaRedirectUri)
+                .postLogoutRedirectUri(spaPostLogoutRedirectUri)
                 .scope(OidcScopes.OPENID)
                 .scope(OidcScopes.PROFILE)
                 .tokenSettings(TokenSettings.builder()
@@ -147,17 +151,21 @@ public class AuthorizationServerConfig {
     }
 
     @Bean
-    public JwtDecoder refreshTokenJwtDecoder(JWKSource<SecurityContext> jwkSource) {
+    public JwtDecoder refreshTokenJwtDecoder(
+            JWKSource<SecurityContext> jwkSource,
+            @Value("${app.auth.issuer}") String issuer) {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSource(jwkSource).build();
-        decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(ISSUER));
+        decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(issuer));
         return decoder;
     }
 
     @Bean
-    public JwtDecoder resourceServerJwtDecoder(JWKSource<SecurityContext> jwkSource) {
+    public JwtDecoder resourceServerJwtDecoder(
+            JWKSource<SecurityContext> jwkSource,
+            @Value("${app.auth.issuer}") String issuer) {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSource(jwkSource).build();
         OAuth2TokenValidator<Jwt> validator = new DelegatingOAuth2TokenValidator<>(
-                JwtValidators.createDefaultWithIssuer(ISSUER),
+                JwtValidators.createDefaultWithIssuer(issuer),
                 new JwtClaimValidator<>("tokenType", "access"::equals)
         );
         decoder.setJwtValidator(validator);
@@ -170,9 +178,10 @@ public class AuthorizationServerConfig {
     }
 
     @Bean
-    public AuthorizationServerSettings authorizationServerSettings() {
+    public AuthorizationServerSettings authorizationServerSettings(
+            @Value("${app.auth.issuer}") String issuer) {
         return AuthorizationServerSettings.builder()
-                .issuer(ISSUER)
+                .issuer(issuer)
                 .build();
     }
 

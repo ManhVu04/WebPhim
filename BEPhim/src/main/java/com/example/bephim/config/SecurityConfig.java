@@ -1,6 +1,7 @@
 package com.example.bephim.config;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -17,7 +18,8 @@ public class SecurityConfig {
     SecurityFilterChain defaultSecurityFilterChain(
             HttpSecurity http,
             CorsConfigurationSource corsConfigurationSource,
-            @Qualifier("resourceServerJwtDecoder") JwtDecoder jwtDecoder) throws Exception {
+            @Qualifier("resourceServerJwtDecoder") JwtDecoder jwtDecoder,
+            @Value("${app.security.csp.allowed-frame-hosts:}") String allowedFrameHosts) throws Exception {
         return http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
@@ -39,6 +41,7 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/login")
                         .permitAll())
+                .headers(headers -> SecurityHeadersConfig.applySecurityHeaders(headers, allowedFrameHosts))
                 .build();
     }
 }
