@@ -1,7 +1,9 @@
 package com.example.bephim.controller;
 
+import com.example.bephim.dto.WatchHistoryRequest;
 import com.example.bephim.model.WatchHistory;
 import com.example.bephim.service.WatchHistoryService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -42,7 +44,7 @@ public class WatchHistoryController {
     @PostMapping({"", "/"})
     public ResponseEntity<?> record(
             @AuthenticationPrincipal Jwt jwt,
-            @RequestBody Map<String, Object> body) {
+            @Valid @RequestBody WatchHistoryRequest body) {
         if (jwt == null) {
             return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
         }
@@ -50,24 +52,13 @@ public class WatchHistoryController {
         if (userId == null || userId.isBlank()) {
             return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
         }
-        String movieSlug = (String) body.get("movieSlug");
-        String episodeSlug = (String) body.getOrDefault("episodeSlug", "");
-        int serverIndex = body.get("serverIndex") instanceof Number n ? n.intValue() : 0;
-        int episodeIndex = body.get("episodeIndex") instanceof Number n ? n.intValue() : 0;
-        String movieName = (String) body.get("movieName");
-        String movieOriginName = (String) body.get("movieOriginName");
-        String thumbUrl = (String) body.get("thumbUrl");
-        String posterUrl = (String) body.get("posterUrl");
-        Integer year = body.get("year") instanceof Number n ? n.intValue() : null;
-        String episodeName = (String) body.get("episodeName");
+        String episodeSlug = body.episodeSlug() != null ? body.episodeSlug().trim() : "";
+        int serverIndex = body.serverIndex() != null ? body.serverIndex() : 0;
+        int episodeIndex = body.episodeIndex() != null ? body.episodeIndex() : 0;
 
-        if (movieSlug == null || movieSlug.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "movieSlug is required"));
-        }
-
-        watchHistoryService.recordWatch(userId, movieSlug.trim(),
-                episodeSlug != null ? episodeSlug.trim() : "",
-                serverIndex, episodeIndex, movieName, movieOriginName, thumbUrl, posterUrl, year, episodeName);
+        watchHistoryService.recordWatch(userId, body.movieSlug().trim(),
+                episodeSlug,
+                serverIndex, episodeIndex, body.movieName(), body.movieOriginName(), body.thumbUrl(), body.posterUrl(), body.year(), body.episodeName());
         return ResponseEntity.ok(Map.of("recorded", true));
     }
 

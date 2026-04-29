@@ -1,8 +1,12 @@
 package com.example.bephim.controller;
 
+import com.example.bephim.dto.LoginRequest;
+import com.example.bephim.dto.RefreshTokenRequest;
+import com.example.bephim.dto.RegisterRequest;
 import com.example.bephim.model.User;
 import com.example.bephim.service.RefreshTokenDenylistService;
 import com.example.bephim.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -44,12 +48,8 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody Map<String, String> body) {
-        String username = body.get("username");
-        String password = body.get("password");
-        String displayName = body.get("displayName");
-
-        User user = userService.register(username, password, displayName);
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest body) {
+        User user = userService.register(body.username(), body.password(), body.displayName());
 
         // Auto-login after register: issue tokens
         Map<String, Object> tokens = issueTokens(user);
@@ -60,13 +60,9 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
-        String username = body.get("username");
-        String password = body.get("password");
-
-        if (username == null || password == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Username and password required"));
-        }
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest body) {
+        String username = body.username();
+        String password = body.password();
 
         User user = userService.findByUsername(username.trim().toLowerCase());
         if (user == null || !passwordEncoder.matches(password, user.getPassword())) {
@@ -94,11 +90,8 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refresh(@RequestBody Map<String, String> body) {
-        String refreshToken = body.get("refreshToken");
-        if (refreshToken == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "refreshToken required"));
-        }
+    public ResponseEntity<?> refresh(@Valid @RequestBody RefreshTokenRequest body) {
+        String refreshToken = body.refreshToken();
 
         try {
             // Validate the refresh token

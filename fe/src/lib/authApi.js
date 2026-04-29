@@ -51,8 +51,9 @@ export async function apiRefreshToken(refreshToken) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refreshToken }),
   });
-  if (!res.ok) throw new Error(res.error || res.message || 'Token refresh failed');
-  return res.json(); // { accessToken, refreshToken, expiresIn, id, username, displayName }
+  const data = await parseApiResponse(res);
+  if (!res.ok) throw new Error(data.error || data.message || 'Token refresh failed');
+  return data; // { accessToken, refreshToken, expiresIn, id, username, displayName }
 }
 
 /**

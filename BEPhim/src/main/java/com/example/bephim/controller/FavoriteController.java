@@ -1,7 +1,9 @@
 package com.example.bephim.controller;
 
+import com.example.bephim.dto.FavoriteRequest;
 import com.example.bephim.model.Favorite;
 import com.example.bephim.service.FavoriteService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -42,7 +44,7 @@ public class FavoriteController {
     @PostMapping({"", "/"})
     public ResponseEntity<?> add(
             @AuthenticationPrincipal Jwt jwt,
-            @RequestBody Map<String, Object> body) {
+            @Valid @RequestBody FavoriteRequest body) {
         if (jwt == null) {
             return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
         }
@@ -50,18 +52,9 @@ public class FavoriteController {
         if (userId == null || userId.isBlank()) {
             return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
         }
-        String movieSlug = (String) body.get("movieSlug");
-        if (movieSlug == null || movieSlug.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "movieSlug is required"));
-        }
-        String movieName = (String) body.get("movieName");
-        String movieOriginName = (String) body.get("movieOriginName");
-        String thumbUrl = (String) body.get("thumbUrl");
-        String posterUrl = (String) body.get("posterUrl");
-        Integer year = body.get("year") instanceof Number n ? n.intValue() : null;
 
-        Favorite fav = favoriteService.addFavorite(userId, movieSlug.trim(),
-                movieName, movieOriginName, thumbUrl, posterUrl, year);
+        Favorite fav = favoriteService.addFavorite(userId, body.movieSlug().trim(),
+                body.movieName(), body.movieOriginName(), body.thumbUrl(), body.posterUrl(), body.year());
         return ResponseEntity.ok(Map.of("movieSlug", fav.getMovieSlug(), "createdAt", fav.getCreatedAt().toString()));
     }
 
