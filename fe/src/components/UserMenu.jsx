@@ -9,7 +9,7 @@ export function UserMenu() {
 
   if (!user) {
     return (
-      <Link to="/dang-nhap" className="chip">
+      <Link to="/dang-nhap" className="login-link">
         Đăng nhập
       </Link>
     );

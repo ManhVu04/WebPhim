@@ -271,7 +271,6 @@ export function Layout({ theme, onToggleTheme }) {
                 </svg>
               )}
             </span>
-            <span className="theme-toggle-label">{theme === 'dark' ? 'Sáng' : 'Tối'}</span>
           </button>
           <UserMenu />
         </div>
@@ -389,4 +388,3 @@ export function Layout({ theme, onToggleTheme }) {
     </>
   )
 }
-
