@@ -65,6 +65,9 @@ export function LoginPage() {
           </button>
         </form>
         <div className="auth-links muted">
+          <Link to="/quen-mat-khau">Quên mật khẩu?</Link>
+        </div>
+        <div className="auth-links muted">
           Chưa có tài khoản? <Link to="/dang-ky">Đăng ký ngay</Link>
         </div>
       </div>

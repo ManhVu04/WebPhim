@@ -8,6 +8,9 @@ import { Suspense, lazy, useEffect, useState } from 'react'
 import { SearchPage } from './pages/SearchPage.jsx'
 import { LoginPage } from './pages/auth/LoginPage.jsx'
 import { RegisterPage } from './pages/auth/RegisterPage.jsx'
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage.jsx'
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage.jsx'
+import { VerifyEmailPage } from './pages/auth/VerifyEmailPage.jsx'
 import { CategoriesPage } from './pages/CategoriesPage.jsx'
 import { CountriesPage } from './pages/CountriesPage.jsx'
 import { YearsPage } from './pages/YearsPage.jsx'
@@ -16,6 +19,7 @@ import { ListByCountryPage } from './pages/ListByCountryPage.jsx'
 import { ProtectedRoute } from './components/ProtectedRoute.jsx'
 import { FavoritesPage } from './pages/user/FavoritesPage.jsx'
 import { HistoryPage } from './pages/user/HistoryPage.jsx'
+import { AccountSecurityPage } from './pages/user/AccountSecurityPage.jsx'
 import { ListByYearPage } from './pages/ListByYearPage.jsx'
 
 const THEME_KEY = 'webphim_theme'
@@ -65,6 +69,9 @@ function App() {
               <Route index element={<ListPage />} />
               <Route path="/dang-nhap" element={<LoginPage />} />
               <Route path="/dang-ky" element={<RegisterPage />} />
+              <Route path="/quen-mat-khau" element={<ForgotPasswordPage />} />
+              <Route path="/dat-lai-mat-khau" element={<ResetPasswordPage />} />
+              <Route path="/xac-minh-email" element={<VerifyEmailPage />} />
               <Route path="/tim-kiem" element={<SearchPage />} />
               <Route path="/the-loai" element={<CategoriesPage />} />
               <Route path="/the-loai/:slug" element={<ListByCategoryPage />} />
@@ -77,6 +84,7 @@ function App() {
               <Route path="/xem/:slug" element={<WatchPage />} />
               <Route path="/yeu-thich" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
               <Route path="/lich-su" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
+              <Route path="/tai-khoan/bao-mat" element={<ProtectedRoute><AccountSecurityPage /></ProtectedRoute>} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>

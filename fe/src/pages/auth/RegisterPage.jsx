@@ -4,6 +4,7 @@ import { useAuth } from '../../lib/auth.jsx';
 
 export function RegisterPage() {
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -29,7 +30,7 @@ export function RegisterPage() {
     setLoading(true);
 
     try {
-      await register(username, password, displayName);
+      await register(username, email, password, displayName);
       navigate('/', { replace: true });
     } catch (err) {
       setError(err.message || 'Đăng ký thất bại. Vui lòng thử lại sau.');
@@ -55,6 +56,20 @@ export function RegisterPage() {
               minLength={3}
               maxLength={50}
               autoComplete="username"
+              disabled={loading}
+              className="form-control"
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              maxLength={254}
+              autoComplete="email"
               disabled={loading}
               className="form-control"
             />

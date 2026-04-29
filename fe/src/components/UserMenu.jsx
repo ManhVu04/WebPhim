@@ -52,10 +52,18 @@ export function UserMenu() {
           <Link 
             to="/yeu-thich" 
             className="dropdownItem"
-            style={{ borderRadius: 0, borderTop: 'none', borderBottom: '1px solid var(--border)' }}
+            style={{ borderRadius: 0, borderTop: 'none', borderBottom: 'none' }}
             onClick={() => setOpen(false)}
           >
             Phim yêu thích
+          </Link>
+          <Link
+            to="/tai-khoan/bao-mat"
+            className="dropdownItem"
+            style={{ borderRadius: 0, borderTop: 'none', borderBottom: '1px solid var(--border)' }}
+            onClick={() => setOpen(false)}
+          >
+            Bảo mật tài khoản
           </Link>
           <button 
             type="button"

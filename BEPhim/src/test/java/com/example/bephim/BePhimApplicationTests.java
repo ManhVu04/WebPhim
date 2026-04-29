@@ -80,6 +80,40 @@ class BePhimApplicationTests {
     }
 
     @Test
+    void forgotPasswordRejectsInvalidEmail() {
+        ResponseEntity<Map> response = postJson("/api/auth/forgot-password", "{\"email\":\"not-an-email\"}");
+
+        assertThat(response.getStatusCode().value()).isEqualTo(400);
+        assertThat(response.getBody()).containsEntry("error", "BAD_REQUEST");
+        assertThat(response.getBody()).containsEntry("status", 400);
+    }
+
+    @Test
+    void resetPasswordRejectsMissingToken() {
+        ResponseEntity<Map> response = postJson("/api/auth/reset-password", "{\"newPassword\":\"secret123\"}");
+
+        assertThat(response.getStatusCode().value()).isEqualTo(400);
+        assertThat(response.getBody()).containsEntry("error", "BAD_REQUEST");
+        assertThat(response.getBody()).containsEntry("status", 400);
+    }
+
+    @Test
+    void changePasswordRejectsInvalidBody() {
+        ResponseEntity<Map> response = authenticatedPostJson("/api/auth/change-password", "{\"currentPassword\":\"old\"}");
+
+        assertThat(response.getStatusCode().value()).isEqualTo(400);
+        assertThat(response.getBody()).containsEntry("error", "BAD_REQUEST");
+        assertThat(response.getBody()).containsEntry("status", 400);
+    }
+
+    @Test
+    void revokeSessionsRequiresAuthentication() {
+        ResponseEntity<Map> response = postJson("/api/auth/sessions/revoke", "{}");
+
+        assertThat(response.getStatusCode().value()).isEqualTo(401);
+    }
+
+    @Test
     void favoriteRejectsMissingMovieSlug() {
         ResponseEntity<Map> response = authenticatedPostJson("/api/favorites", "{}");
 

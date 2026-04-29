@@ -26,11 +26,11 @@ export async function apiLogin(username, password) {
   return data; // { accessToken, refreshToken, expiresIn, id, username, displayName }
 }
 
-export async function apiRegister(username, password, displayName) {
+export async function apiRegister(username, email, password, displayName) {
   const res = await fetch(`${API_BASE}/api/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password, displayName }),
+    body: JSON.stringify({ username, email, password, displayName }),
   });
   const data = await parseApiResponse(res);
   if (!res.ok) throw new Error(data.error || data.message || 'Registration failed');
@@ -54,6 +54,63 @@ export async function apiRefreshToken(refreshToken) {
   const data = await parseApiResponse(res);
   if (!res.ok) throw new Error(data.error || data.message || 'Token refresh failed');
   return data; // { accessToken, refreshToken, expiresIn, id, username, displayName }
+}
+
+export async function apiChangePassword(accessToken, currentPassword, newPassword) {
+  const data = await authFetch('/api/auth/change-password', accessToken, {
+    method: 'POST',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  if (data?._unauthorized) throw new Error('Session expired');
+  if (data?._error) throw new Error(data.error || data.message || 'Password change failed');
+  return data;
+}
+
+export async function apiRevokeAllSessions(accessToken) {
+  const data = await authFetch('/api/auth/sessions/revoke', accessToken, {
+    method: 'POST',
+  });
+  if (data?._unauthorized) throw new Error('Session expired');
+  if (data?._error) throw new Error(data.error || data.message || 'Session revoke failed');
+  return data;
+}
+
+export async function apiForgotPassword(email) {
+  const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  const data = await parseApiResponse(res);
+  if (!res.ok) throw new Error(data.error || data.message || 'Password reset request failed');
+  return data;
+}
+
+export async function apiResetPassword(token, newPassword) {
+  const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, newPassword }),
+  });
+  const data = await parseApiResponse(res);
+  if (!res.ok) throw new Error(data.error || data.message || 'Password reset failed');
+  return data;
+}
+
+export async function apiVerifyEmail(token) {
+  const res = await fetch(`${API_BASE}/api/auth/verify-email?token=${encodeURIComponent(token)}`);
+  const data = await parseApiResponse(res);
+  if (!res.ok) throw new Error(data.error || data.message || 'Email verification failed');
+  return data;
+}
+
+export async function apiResendEmailVerification(accessToken) {
+  const data = await authFetch('/api/auth/email/verification/resend', accessToken, {
+    method: 'POST',
+  });
+  if (data?._unauthorized) throw new Error('Session expired');
+  if (data?._error) throw new Error(data.error || data.message || 'Verification email resend failed');
+  return data;
 }
 
 /**

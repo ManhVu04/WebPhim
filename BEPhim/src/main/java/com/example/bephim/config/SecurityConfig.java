@@ -29,7 +29,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/register").permitAll()
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/api/auth/refresh").permitAll()
+                        .requestMatchers("/api/auth/forgot-password").permitAll()
+                        .requestMatchers("/api/auth/reset-password").permitAll()
+                        .requestMatchers("/api/auth/verify-email").permitAll()
                         .requestMatchers("/api/auth/me").authenticated()
+                        .requestMatchers("/api/auth/change-password").authenticated()
+                        .requestMatchers("/api/auth/sessions/revoke").authenticated()
+                        .requestMatchers("/api/auth/email/verification/resend").authenticated()
                         // Protected endpoints
                         .requestMatchers("/api/favorites/**").authenticated()
                         .requestMatchers("/api/history/**").authenticated()

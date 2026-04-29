@@ -50,7 +50,13 @@ export function AuthProvider({ children }) {
               const newAuthData = {
                 accessToken: refreshed.accessToken,
                 refreshToken: refreshed.refreshToken,
-                user: { id: refreshed.id, username: refreshed.username, displayName: refreshed.displayName },
+              user: {
+                id: refreshed.id,
+                username: refreshed.username,
+                displayName: refreshed.displayName,
+                email: refreshed.email,
+                emailVerified: refreshed.emailVerified,
+              },
               };
               sessionStorage.setItem('webphim_auth', JSON.stringify(newAuthData));
               setAccessToken(refreshed.accessToken);
@@ -105,7 +111,13 @@ export function AuthProvider({ children }) {
     const authData = {
       accessToken: data.accessToken,
       refreshToken: data.refreshToken,
-      user: { id: data.id, username: data.username, displayName: data.displayName },
+      user: {
+        id: data.id,
+        username: data.username,
+        displayName: data.displayName,
+        email: data.email,
+        emailVerified: data.emailVerified,
+      },
     };
     sessionStorage.setItem('webphim_auth', JSON.stringify(authData));
     setAccessToken(data.accessToken);
@@ -119,8 +131,8 @@ export function AuthProvider({ children }) {
     return data;
   }, [saveAuth]);
 
-  const register = useCallback(async (username, password, displayName) => {
-    const data = await apiRegister(username, password, displayName);
+  const register = useCallback(async (username, email, password, displayName) => {
+    const data = await apiRegister(username, email, password, displayName);
     saveAuth(data);
     return data;
   }, [saveAuth]);
