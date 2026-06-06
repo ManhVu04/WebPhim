@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { ophimApi } from '../lib/api.js'
 import { MovieGrid } from '../components/MovieGrid.jsx'
 import { ErrorState, Loading } from '../components/State.jsx'
@@ -11,6 +11,8 @@ const TITLE_MAP = {
   'phim-bo': 'Phim bộ',
   'hoat-hinh': 'Hoạt hình',
   'tv-shows': 'TV Shows',
+  'phim-chieu-rap': 'Phim chiếu rạp',
+  'phim-sap-chieu': 'Phim sắp chiếu',
 }
 
 export function ListPage() {
@@ -50,34 +52,12 @@ export function ListPage() {
 
   return (
     <div className="list-page-shell">
-      <section className="hero-hero panel">
-        <div className="hero-copy">
-          <p className="eyebrow">{title}</p>
-          <h1>Kho phim nhẹ mắt, ấm áp và dễ xem hơn cho mọi thời điểm trong ngày.</h1>
-          <p className="hero-lead">
-            Khám phá phim với màu sắc dịu, bố cục rõ ràng và cảm giác thoải mái khi lướt lâu trên cả điện thoại lẫn màn hình lớn.
-          </p>
-        </div>
-        <div className="hero-meta">
-          <div>
-            <span className="hero-meta-label">Hiện có</span>
-            <strong>{items.length} phim</strong>
-          </div>
-          <div>
-            <span className="hero-meta-label">Trang</span>
-            <strong>{page}</strong>
-          </div>
-        </div>
-        <div className="hero-links">
-          <Link to="/danh-sach/phim-moi?page=1" className="hero-link">Phim mới</Link>
-          <Link to="/danh-sach/phim-bo?page=1" className="hero-link">Phim bộ</Link>
-          <Link to="/the-loai" className="hero-link">Thể loại</Link>
-          <Link to="/quoc-gia" className="hero-link">Quốc gia</Link>
-        </div>
-      </section>
+      <div className="page-heading">
+        <h1>Danh sách {title}</h1>
+        <span>Trang {page}</span>
+      </div>
       <MovieGrid cdnBase={cdn} items={items} />
       <Pagination pagination={pagination} />
     </div>
   )
 }
-

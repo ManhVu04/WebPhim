@@ -31,13 +31,10 @@ export function Pagination({ pagination }) {
   const next = Math.min(totalPages, current + 1)
 
   return (
-    <div className="panel" style={{ marginTop: 16 }}>
-      <div className="muted" style={{ marginBottom: 10 }}>
-        Trang {current}/{totalPages} · Tổng {totalItems} kết quả
-      </div>
-      <div className="episodes" style={{ marginTop: 0 }}>
+    <nav className="pagination" aria-label="Phân trang">
+      <div className="episodes pagination-list">
         <Link className={`epBtn${current === 1 ? ' active' : ''}`} to={`${loc.pathname}${setPageSearch(loc.search, 1)}`}>
-          « 1
+          1
         </Link>
         <Link className="epBtn" to={`${loc.pathname}${setPageSearch(loc.search, prev)}`}>
           ‹
@@ -60,10 +57,9 @@ export function Pagination({ pagination }) {
           className={`epBtn${current === totalPages ? ' active' : ''}`}
           to={`${loc.pathname}${setPageSearch(loc.search, totalPages)}`}
         >
-          {totalPages} »
+          {totalPages}
         </Link>
       </div>
-    </div>
+    </nav>
   )
 }
-

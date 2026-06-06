@@ -1,9 +1,18 @@
 import { apiCache } from './cache.js';
 
 const API_PREFIX = (import.meta.env.VITE_API_BASE_URL ?? '/api/ophim').replace(/\/$/, '');
+const DIRECT_API_PREFIX = (import.meta.env.VITE_DIRECT_API_BASE_URL ?? 'https://ophim1.com/v1/api').replace(/\/$/, '');
 
-async function requestJson(path, { signal } = {}) {
-  const res = await fetch(`${API_PREFIX}${path.startsWith('/') ? path : `/${path}`}`, {
+function buildApiUrl(prefix, path) {
+  return `${prefix}${path.startsWith('/') ? path : `/${path}`}`;
+}
+
+function canUseDirectFallback() {
+  return Boolean(DIRECT_API_PREFIX) && API_PREFIX.startsWith('/');
+}
+
+async function fetchJsonFrom(prefix, path, { signal } = {}) {
+  const res = await fetch(buildApiUrl(prefix, path), {
     headers: { accept: 'application/json' },
     signal,
   });
@@ -14,6 +23,15 @@ async function requestJson(path, { signal } = {}) {
     throw new Error(msg);
   }
   return text ? JSON.parse(text) : null;
+}
+
+async function requestJson(path, { signal } = {}) {
+  try {
+    return await fetchJsonFrom(API_PREFIX, path, { signal });
+  } catch (error) {
+    if (signal?.aborted || !canUseDirectFallback()) throw error;
+    return fetchJsonFrom(DIRECT_API_PREFIX, path, { signal });
+  }
 }
 
 export const ophimApi = {

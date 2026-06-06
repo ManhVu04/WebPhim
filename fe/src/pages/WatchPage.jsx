@@ -6,6 +6,8 @@ import { Player } from '../components/Player.jsx'
 import { useAuth } from '../lib/auth.jsx'
 import { authFetch } from '../lib/authApi.js'
 import { buildThumbUrl, buildPosterUrl } from '../lib/image.js'
+import { MovieCard } from '../components/MovieCard.jsx'
+import { htmlToText } from '../lib/text.js'
 
 function clampIndex(n, max) {
   if (!Number.isFinite(n) || n < 0) return 0
@@ -36,6 +38,7 @@ export function WatchPage() {
   const [serverIdx, setServerIdx] = useState(0)
   const [epIdx, setEpIdx] = useState(0)
   const [showAllEps, setShowAllEps] = useState(false)
+  const [recommendations, setRecommendations] = useState(null)
   const { accessToken } = useAuth()
   const prefetchedEpRef = useRef(new Set())
 
@@ -45,12 +48,17 @@ export function WatchPage() {
   useEffect(() => {
     let alive = true
     setLoading(true)
-    ophimApi
-      .movie(slug)
-      .then((json) => {
+    Promise.allSettled([ophimApi.movie(slug), ophimApi.list('phim-moi', 1)])
+      .then((results) => {
         if (!alive) return
-        setMovie(json)
-        setErr(null)
+        const [movieResult, recommendationResult] = results
+        if (movieResult.status === 'fulfilled') {
+          setMovie(movieResult.value)
+          setErr(null)
+        } else {
+          setErr(movieResult.reason)
+        }
+        setRecommendations(recommendationResult.status === 'fulfilled' ? recommendationResult.value : null)
       })
       .catch((e) => alive && setErr(e))
       .finally(() => alive && setLoading(false))
@@ -153,27 +161,49 @@ export function WatchPage() {
   if (err) return <ErrorState error={err} />
   if (!item) return <div className="panel muted">Không tìm thấy phim.</div>
 
-  return (
-    <>
-      <div className="section-title" style={{ marginTop: 0 }}>
-        <h1 style={{ fontSize: 18 }}>{title}</h1>
-        <div className="muted">
-          <Link className="chip" to={`/phim/${encodeURIComponent(slug)}`}>
-            ← Thông tin phim
-          </Link>
-        </div>
-      </div>
+  const contentText = htmlToText(item?.content || '')
+  const castNames = Array.isArray(item?.actor) ? item.actor.filter(Boolean).slice(0, 4) : []
+  const recommendationData = recommendations?.data || {}
+  const recommendationItems = (recommendationData.items || []).filter((movie) => movie.slug !== slug).slice(0, 8)
+  const recommendationCdn = recommendationData.APP_DOMAIN_CDN_IMAGE || recommendationData.APP_DOMAIN_CDN || cdnBase
 
-      <Player
-        title={`${title} · ${currentServer?.server_name || 'Server'} · ${currentEp?.name || ''}`}
-        linkEmbed={currentEp?.link_embed}
-        linkM3u8={currentEp?.link_m3u8}
-      />
+  return (
+    <div className="watch-page">
+      <section className="watch-player-shell">
+        <Player
+          title={`${title} · ${currentServer?.server_name || 'Server'} · ${currentEp?.name || ''}`}
+          linkEmbed={currentEp?.link_embed}
+          linkM3u8={currentEp?.link_m3u8}
+        />
+      </section>
+
+      <section className="watch-info">
+        <Link className="server-hint" to={`/phim/${encodeURIComponent(slug)}`}>⌾ Chọn Server</Link>
+        <h1>{title} <span>› {currentEp?.name || 'Tập 1'}</span></h1>
+        <div className="detail-tags compact">
+          {item?.year ? <span>Năm {item.year}</span> : null}
+          {item?.episode_current ? <span>{item.episode_current}</span> : null}
+          {item?.lang ? <span>{item.lang}</span> : null}
+          {item?.quality ? <span>{item.quality}</span> : null}
+        </div>
+        {contentText ? <p className="watch-description"><b>Nội dung:</b> {contentText}</p> : null}
+
+        {castNames.length ? (
+          <div className="cast-strip">
+            {castNames.map((name) => (
+              <div className="cast-token" key={name}>
+                <span aria-hidden="true" />
+                <strong>{name}</strong>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </section>
 
       {servers.length ? (
-        <div className="panel" style={{ marginTop: 14 }}>
-          <div style={{ fontWeight: 800, marginBottom: 10 }}>Chọn server</div>
-          <div className="kvs">
+        <section className="episode-panel">
+          <div className="block-title">Chọn server</div>
+          <div className="kvs server-list">
             {servers.map((s, i) => (
               <button
                 key={s.server_name || i}
@@ -190,7 +220,7 @@ export function WatchPage() {
             ))}
           </div>
 
-          <div style={{ fontWeight: 800, marginTop: 14, marginBottom: 10 }}>Chọn tập</div>
+          <div className="block-title episode-title">Danh sách tập</div>
           {visibleEps.length ? (
             <div className="episodes">
               {visibleEps.map((ep, i) => {
@@ -227,8 +257,23 @@ export function WatchPage() {
           ) : (
             <div className="muted">Server này chưa có dữ liệu tập.</div>
           )}
-        </div>
+        </section>
       ) : null}
-    </>
+
+      <section className="comments-placeholder">
+        <h2>Bình luận</h2>
+      </section>
+
+      {recommendationItems.length ? (
+        <section className="movie-section">
+          <div className="section-title"><h2>Đề xuất</h2></div>
+          <div className="rail-grid">
+            {recommendationItems.map((movie) => (
+              <MovieCard key={movie._id || movie.slug} cdnBase={recommendationCdn} item={movie} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+    </div>
   )
 }

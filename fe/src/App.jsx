@@ -21,18 +21,19 @@ import { FavoritesPage } from './pages/user/FavoritesPage.jsx'
 import { HistoryPage } from './pages/user/HistoryPage.jsx'
 import { AccountSecurityPage } from './pages/user/AccountSecurityPage.jsx'
 import { ListByYearPage } from './pages/ListByYearPage.jsx'
+import { HomePage } from './pages/HomePage.jsx'
 
 const THEME_KEY = 'webphim_theme'
 
 function getInitialTheme() {
-  if (typeof window === 'undefined') return 'light'
+  if (typeof window === 'undefined') return 'dark'
   try {
     const saved = window.localStorage.getItem(THEME_KEY)
     if (saved === 'light' || saved === 'dark') return saved
   } catch {
     // ignore storage errors
   }
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  return 'dark'
 }
 
 function applyTheme(theme) {
@@ -66,7 +67,7 @@ function App() {
         <Suspense fallback={<div className="panel muted">Đang tải...</div>}>
           <Routes>
             <Route element={<Layout theme={theme} onToggleTheme={toggleTheme} />}>
-              <Route index element={<ListPage />} />
+              <Route index element={<HomePage />} />
               <Route path="/dang-nhap" element={<LoginPage />} />
               <Route path="/dang-ky" element={<RegisterPage />} />
               <Route path="/quen-mat-khau" element={<ForgotPasswordPage />} />

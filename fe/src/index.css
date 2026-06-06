@@ -1,51 +1,33 @@
 :root {
-  --bg: #f4efe7;
-  --bg-2: #efe4d5;
-  --panel: rgba(255, 250, 241, 0.8);
-  --panel-solid: #fff8ec;
-  --panel-2: rgba(248, 236, 218, 0.84);
-  --border: rgba(92, 61, 34, 0.14);
-  --text: #24170f;
-  --muted: rgba(36, 23, 15, 0.62);
-  --brand: #b84a2b;
-  --brand-2: #e0a458;
-  --accent: #c85c32;
-  --accent-soft: rgba(200, 92, 50, 0.13);
-  --shadow: 0 18px 45px rgba(85, 48, 20, 0.12);
-  --shadow-soft: 0 10px 28px rgba(85, 48, 20, 0.08);
+  --bg: #101116;
+  --bg-2: #0a0d10;
+  --surface: #15171d;
+  --panel: rgba(24, 26, 33, 0.9);
+  --panel-solid: #171a21;
+  --panel-2: #22252d;
+  --border: rgba(255, 255, 255, 0.09);
+  --text: #f4f4f5;
+  --muted: rgba(244, 244, 245, 0.64);
+  --muted-2: rgba(244, 244, 245, 0.42);
+  --brand: #ff7a2f;
+  --brand-2: #ffc857;
+  --accent: #11d765;
+  --accent-2: #13b85c;
+  --danger: #ef4444;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.48);
+  --shadow-soft: 0 14px 40px rgba(0, 0, 0, 0.28);
 
-  font: 16px/150% system-ui, 'Segoe UI', Inter, Roboto, sans-serif;
-  color-scheme: light;
+  font: 16px/150% Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color-scheme: dark;
   color: var(--text);
-  background:
-    radial-gradient(circle at 12% 0%, rgba(224, 164, 88, 0.22), transparent 32rem),
-    radial-gradient(circle at 88% 12%, rgba(184, 74, 43, 0.14), transparent 28rem),
-    linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+  background: var(--bg);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-:root[data-theme='dark'] {
-  --bg: #101114;
-  --bg-2: #181a1f;
-  --panel: rgba(24, 26, 31, 0.86);
-  --panel-solid: #17191d;
-  --panel-2: rgba(31, 34, 40, 0.9);
-  --border: rgba(255, 244, 232, 0.1);
-  --text: #f6efe6;
-  --muted: rgba(246, 239, 230, 0.72);
-  --brand: #a95d44;
-  --brand-2: #c78b57;
-  --accent: #c9734f;
-  --accent-soft: rgba(201, 115, 79, 0.16);
-  --shadow: 0 24px 56px rgba(0, 0, 0, 0.34);
-  --shadow-soft: 0 16px 36px rgba(0, 0, 0, 0.24);
+:root[data-theme='light'] {
   color-scheme: dark;
-  background:
-    radial-gradient(circle at 14% 0%, rgba(201, 115, 79, 0.12), transparent 28rem),
-    radial-gradient(circle at 86% 10%, rgba(104, 66, 47, 0.16), transparent 24rem),
-    linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
 }
 
 * {
@@ -62,12 +44,27 @@ body {
   margin: 0;
   overflow-x: hidden;
   color: var(--text);
-  background-color: var(--bg);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 220px),
+    var(--bg-2);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+img,
+video,
+iframe {
+  max-width: 100%;
 }
 
 main {

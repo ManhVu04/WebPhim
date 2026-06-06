@@ -4,7 +4,7 @@ import { ophimApi } from '../lib/api.js'
 import { SearchOverlay } from './SearchOverlay.jsx'
 import { UserMenu } from './UserMenu.jsx'
 
-export function Layout({ theme, onToggleTheme }) {
+export function Layout() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const initial = params.get('keyword') || params.get('q') || ''
@@ -12,7 +12,7 @@ export function Layout({ theme, onToggleTheme }) {
   const [searchFocused, setSearchFocused] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const searchWrapperRef = useRef(null)
-  const [open, setOpen] = useState(null) // 'danh-sach' | 'the-loai' | 'quoc-gia' | 'nam' | null
+  const [open, setOpen] = useState(null) // 'the-loai' | 'quoc-gia' | null
   const [cats, setCats] = useState([])
   const [countries, setCountries] = useState([])
   const [years, setYears] = useState([])
@@ -51,6 +51,9 @@ export function Layout({ theme, onToggleTheme }) {
   const navItems = useMemo(
     () => [
       { to: '/', label: 'Trang chủ' },
+      { to: '/danh-sach/phim-chieu-rap?page=1', label: 'Phim chiếu rạp' },
+      { to: '/danh-sach/phim-sap-chieu?page=1', label: 'Phim sắp chiếu' },
+      { to: '/danh-sach/phim-moi?page=1', label: 'Phim đề cử' },
     ],
     [],
   )
@@ -96,45 +99,10 @@ export function Layout({ theme, onToggleTheme }) {
         <div className="container topbar-inner">
           <NavLink to="/" className="brand" aria-label="Trang chủ">
             <span className="brand-badge" aria-hidden="true" />
-            <span>WebPhim</span>
+            <span><b>Web</b>Phim</span>
           </NavLink>
 
           <nav className="nav" aria-label="Điều hướng">
-            {navItems.map((it) => (
-              <NavLink key={it.to} to={it.to} className={({ isActive }) => `chip${isActive ? ' active' : ''}`}>
-                {it.label}
-              </NavLink>
-            ))}
-
-            <div className="dropdown">
-              <button
-                type="button"
-                className={`chip${open === 'danh-sach' ? ' active' : ''}`}
-                onClick={() => setOpen((v) => (v === 'danh-sach' ? null : 'danh-sach'))}
-              >
-                Danh sách
-              </button>
-              {open === 'danh-sach' ? (
-                <div className="dropdownPanel" onMouseLeave={() => setOpen(null)}>
-                  <Link className="dropdownItem" to="/danh-sach/phim-moi?page=1">
-                    Phim mới
-                  </Link>
-                  <Link className="dropdownItem" to="/danh-sach/phim-le?page=1">
-                    Phim lẻ
-                  </Link>
-                  <Link className="dropdownItem" to="/danh-sach/phim-bo?page=1">
-                    Phim bộ
-                  </Link>
-                  <Link className="dropdownItem" to="/danh-sach/hoat-hinh?page=1">
-                    Hoạt hình
-                  </Link>
-                  <Link className="dropdownItem" to="/danh-sach/tv-shows?page=1">
-                    TV Shows
-                  </Link>
-                </div>
-              ) : null}
-            </div>
-
             <div className="dropdown">
               <button
                 type="button"
@@ -145,7 +113,7 @@ export function Layout({ theme, onToggleTheme }) {
                   if (next) await ensureCats()
                 }}
               >
-                Thể loại
+                Thể loại <span aria-hidden="true">⌄</span>
               </button>
               {open === 'the-loai' ? (
                 <div className="dropdownPanel" onMouseLeave={() => setOpen(null)}>
@@ -168,7 +136,7 @@ export function Layout({ theme, onToggleTheme }) {
                   if (next) await ensureCountries()
                 }}
               >
-                Quốc gia
+                Quốc gia <span aria-hidden="true">⌄</span>
               </button>
               {open === 'quoc-gia' ? (
                 <div className="dropdownPanel" onMouseLeave={() => setOpen(null)}>
@@ -181,28 +149,11 @@ export function Layout({ theme, onToggleTheme }) {
               ) : null}
             </div>
 
-            <div className="dropdown">
-              <button
-                type="button"
-                className={`chip${open === 'nam' ? ' active' : ''}`}
-                onClick={async () => {
-                  const next = open === 'nam' ? null : 'nam'
-                  setOpen(next)
-                  if (next) await ensureYears()
-                }}
-              >
-                Năm
-              </button>
-              {open === 'nam' ? (
-                <div className="dropdownPanel dropdownPanelYears" onMouseLeave={() => setOpen(null)}>
-                  {years.slice(0, 60).map((y) => (
-                    <Link key={y} className="dropdownItem" to={`/nam-phat-hanh/${y}?page=1`}>
-                      {y}
-                    </Link>
-                  ))}
-                </div>
-              ) : null}
-            </div>
+            {navItems.map((it) => (
+              <NavLink key={it.to} to={it.to} className={({ isActive }) => `chip${isActive ? ' active' : ''}`}>
+                {it.label}
+              </NavLink>
+            ))}
           </nav>
 
           {/* Mobile menu button */}
@@ -228,7 +179,7 @@ export function Layout({ theme, onToggleTheme }) {
                 value={q}
                 onChange={(e) => { setQ(e.target.value); setSearchFocused(true) }}
                 onFocus={() => setSearchFocused(true)}
-                placeholder="Tìm phim theo từ khóa..."
+                placeholder="Tìm kiếm"
                 aria-label="Tìm phim"
               />
               {q && (
@@ -244,34 +195,6 @@ export function Layout({ theme, onToggleTheme }) {
             </form>
             {searchFocused && <SearchOverlay query={q} onClose={closeSearch} containerRef={searchWrapperRef} />}
           </div>
-          <button
-            type="button"
-            className="theme-toggle"
-            onClick={onToggleTheme}
-            aria-label={theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
-            aria-pressed={theme === 'dark'}
-            title={theme === 'dark' ? 'Giao diện sáng' : 'Giao diện tối'}
-          >
-            <span className="theme-toggle-icon" aria-hidden="true">
-              {theme === 'dark' ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="4" />
-                  <path d="M12 2v2" />
-                  <path d="M12 20v2" />
-                  <path d="m4.93 4.93 1.41 1.41" />
-                  <path d="m17.66 17.66 1.41 1.41" />
-                  <path d="M2 12h2" />
-                  <path d="M20 12h2" />
-                  <path d="m6.34 17.66-1.41 1.41" />
-                  <path d="m19.07 4.93-1.41 1.41" />
-                </svg>
-              ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                </svg>
-              )}
-            </span>
-          </button>
           <UserMenu />
         </div>
       </header>
@@ -288,7 +211,7 @@ export function Layout({ theme, onToggleTheme }) {
         <div className="mobile-menu-header">
           <div className="brand" style={{ margin: 0 }}>
             <span className="brand-badge" aria-hidden="true" />
-            <span>WebPhim</span>
+            <span><b>Web</b>Phim</span>
           </div>
           <button className="mobile-menu-close" onClick={closeMobileMenu} aria-label="Đóng menu">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -385,6 +308,28 @@ export function Layout({ theme, onToggleTheme }) {
           <Outlet />
         </div>
       </main>
+      <footer className="site-footer">
+        <div className="container footer-inner">
+          <div className="footer-tagline">
+            <h2>Trải nghiệm tuyệt vời nhất, tất cả đều có tại WebPhim</h2>
+            <p><strong>webphim</strong> Xem miễn phí số lượng lớn tài nguyên có độ phân giải cực cao</p>
+          </div>
+          <div className="footer-devices" aria-label="Thiết bị hỗ trợ">
+            <span>◉ Mobile</span>
+            <span>◎ Tivi</span>
+            <span>◌ Desktop</span>
+          </div>
+          <div className="footer-bottom">
+            <div className="footer-links">
+              <Link to="/">Telegram</Link>
+              <Link to="/">Đánh giá</Link>
+              <Link to="/">WebPhim</Link>
+            </div>
+            <p>@ 2024 All rights reserved.</p>
+            <p>Tất cả các tài nguyên đều đến từ Internet. Nếu có bất kỳ hành vi xâm phạm quyền nào của bạn, vui lòng liên hệ với chúng tôi.</p>
+          </div>
+        </div>
+      </footer>
     </>
   )
 }

@@ -7,6 +7,7 @@ import { LazyImage } from './LazyImage.jsx'
 export const MovieCard = memo(function MovieCard({ cdnBase, item, priority }) {
   const thumb = buildThumbUrl(cdnBase, item?.thumb_url)
   const title = item?.name || item?.origin_name || item?.slug
+  const badge = [item?.lang || 'Vietsub', item?.quality || 'HD'].filter(Boolean).join(' ')
   const prefetched = useRef(false)
   const imagePreloadRef = useRef(null)
 
@@ -25,17 +26,17 @@ export const MovieCard = memo(function MovieCard({ cdnBase, item, priority }) {
   return (
     <Link
       to={`/phim/${encodeURIComponent(item.slug)}`}
-      className="card"
+      className="card movie-card"
       onMouseEnter={handleMouseEnter}
     >
-      <LazyImage
-        src={thumb}
-        alt={title}
-        className="poster"
-        priority={priority}
-      />
-      <div className="badge">
-        {item?.quality || 'HD'} · {item?.lang || 'Vietsub'}
+      <div className="poster-frame">
+        <LazyImage
+          src={thumb}
+          alt={title}
+          className="poster"
+          priority={priority}
+        />
+        <div className="badge">{badge}</div>
       </div>
       <div className="card-body">
         <div className="title">{title}</div>

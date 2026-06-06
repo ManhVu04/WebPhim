@@ -7,6 +7,7 @@ import { ErrorState, Loading } from '../components/State.jsx'
 import { LazyImage } from '../components/LazyImage.jsx'
 import { useAuth } from '../lib/auth.jsx'
 import { authFetch } from '../lib/authApi.js'
+import { MovieCard } from '../components/MovieCard.jsx'
 
 function joinNames(arr) {
   if (!Array.isArray(arr)) return ''
@@ -22,8 +23,8 @@ export function MovieDetailPage() {
   const [movie, setMovie] = useState(null)
   const [err, setErr] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [images, setImages] = useState(null)
   const [people, setPeople] = useState(null)
+  const [recommendations, setRecommendations] = useState(null)
   const { user, accessToken } = useAuth()
   const [isFavorite, setIsFavorite] = useState(false)
   const [favLoading, setFavLoading] = useState(false)
@@ -89,17 +90,17 @@ export function MovieDetailPage() {
   useEffect(() => {
     let alive = true
     setLoading(true)
-    Promise.allSettled([ophimApi.movie(slug), ophimApi.movieImages(slug), ophimApi.moviePeople(slug)]).then(
+    Promise.allSettled([ophimApi.movie(slug), ophimApi.moviePeople(slug), ophimApi.list('phim-moi', 1)]).then(
       (results) => {
         if (!alive) return
-        const [rMovie, rImages, rPeople] = results
+        const [rMovie, rPeople, rRecommendations] = results
         if (rMovie.status === 'rejected') {
           setErr(rMovie.reason)
         } else {
           setMovie(rMovie.value)
         }
-        setImages(rImages.status === 'fulfilled' ? rImages.value : null)
         setPeople(rPeople.status === 'fulfilled' ? rPeople.value : null)
+        setRecommendations(rRecommendations.status === 'fulfilled' ? rRecommendations.value : null)
         setLoading(false)
       },
     )
@@ -141,21 +142,32 @@ export function MovieDetailPage() {
   if (!item) return <div className="panel muted">Không tìm thấy phim.</div>
 
   const contentText = htmlToText(item?.content)
+  const recommendationData = recommendations?.data || {}
+  const recommendationItems = (recommendationData.items || []).filter((movie) => movie.slug !== slug).slice(0, 8)
+  const recommendationCdn = recommendationData.APP_DOMAIN_CDN_IMAGE || recommendationData.APP_DOMAIN_CDN || cdn
 
   return (
-    <div className="row">
-      <div className="big-poster">
-        <LazyImage src={poster} alt={title} priority={true} />
-      </div>
-
-      <div className="panel">
-        <div className="section-title" style={{ marginTop: 0, alignItems: 'flex-start' }}>
-          <div className="titleBlock">
-            <h1>{title}</h1>
-            {altNames ? <div className="muted lineClamp2">{altNames}</div> : null}
+    <div className="detail-page">
+      <section className="detail-hero" style={{ '--detail-backdrop': `url(${poster})` }}>
+        <div className="detail-copy">
+          <h1>{title}</h1>
+          {altNames ? <div className="muted lineClamp2">{altNames}</div> : null}
+          <div className="detail-tags">
+            {item?.year ? <span>Năm {item.year}</span> : null}
+            {item?.status ? <span>{item.status}</span> : null}
+            {item?.episode_current ? <span>{item.episode_current}</span> : null}
+            {countries ? <span>{countries}</span> : null}
           </div>
-                    <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0 }}>
-            <div className="muted">{item?.year ? `Năm ${item.year}` : ''}</div>
+          <div className="rating-box">
+            <span className="stars" aria-hidden="true">★★★★★★★★☆☆</span>
+            <strong>{item?.tmdb?.vote_average ? `${Number(item.tmdb.vote_average).toFixed(1)} sao` : '8.0 sao'}</strong>
+          </div>
+          <div className="detail-info">
+            {directors.length ? <p><b>Đạo diễn:</b> {joinNames(directors)}</p> : null}
+            {cast.length ? <p><b>Diễn viên:</b> {joinNames(cast)}</p> : null}
+            {contentText ? <p><b>Nội dung:</b> {contentText}</p> : null}
+          </div>
+          <div className="detail-actions">
             {user && (
               <button
                 className="btn"
@@ -186,37 +198,24 @@ export function MovieDetailPage() {
               </button>
             )}
             <Link className="btnPrimary" to={`/xem/${encodeURIComponent(slug)}?server=0&ep=0`}>
-              Xem phim
+              ▶ Xem phim
             </Link>
           </div>
         </div>
+      </section>
 
+      <section className="detail-panel">
         <div className="kvs">
-          {item?.quality ? <span className="kv">Chất lượng: {item.quality}</span> : null}
-          {item?.lang ? <span className="kv">Ngôn ngữ: {item.lang}</span> : null}
-          {item?.episode_current ? <span className="kv">{item.episode_current}</span> : null}
+          {item?.quality ? <span className="kv">{item.quality}</span> : null}
+          {item?.lang ? <span className="kv">{item.lang}</span> : null}
           {item?.time ? <span className="kv">{item.time}</span> : null}
-          {item?.type ? <span className="kv">Loại: {item.type}</span> : null}
+          {item?.type ? <span className="kv">{item.type}</span> : null}
+          {categories ? <span className="kv">{categories}</span> : null}
         </div>
-
-        <div style={{ marginTop: 14 }} className="muted">
-          {categories ? (
-            <div>
-              <b>Thể loại:</b> {categories}
-            </div>
-          ) : null}
-          {countries ? (
-            <div>
-              <b>Quốc gia:</b> {countries}
-            </div>
-          ) : null}
-        </div>
-
-        {contentText ? <div style={{ marginTop: 14, whiteSpace: 'pre-wrap' }}>{contentText}</div> : null}
 
         {Array.isArray(directors) && directors.length ? (
-          <div style={{ marginTop: 16 }}>
-            <div style={{ fontWeight: 800, marginBottom: 10 }}>Đạo diễn</div>
+          <div className="people-block">
+            <div className="block-title">Đạo diễn</div>
             <div className="peopleRow">
               {directors.slice(0, 12).map((p) => {
                 const imgBase = profileSizes.w185 || profileSizes.h632 || profileSizes.original || ''
@@ -236,8 +235,8 @@ export function MovieDetailPage() {
         ) : null}
 
         {Array.isArray(cast) && cast.length ? (
-          <div style={{ marginTop: 16 }}>
-            <div style={{ fontWeight: 800, marginBottom: 10 }}>Diễn viên</div>
+          <div className="people-block">
+            <div className="block-title">Diễn viên</div>
             <div className="peopleRow">
               {cast.slice(0, 18).map((p) => {
                 const imgBase = profileSizes.w185 || profileSizes.h632 || profileSizes.original || ''
@@ -256,25 +255,18 @@ export function MovieDetailPage() {
           </div>
         ) : null}
 
-        {images?.data?.items?.length ? (
-          <div style={{ marginTop: 16 }}>
-            <div style={{ fontWeight: 700, marginBottom: 8 }}>Hình ảnh</div>
-            <div className="kvs">
-              {images.data.items.slice(0, 8).map((img) => (
-                <a
-                  key={img.file_path || img}
-                  className="kv"
-                  href={img.file_path || img}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Xem ảnh
-                </a>
-              ))}
-            </div>
+      </section>
+
+      {recommendationItems.length ? (
+        <section className="movie-section">
+          <div className="section-title"><h2>Đề xuất</h2></div>
+          <div className="rail-grid">
+            {recommendationItems.map((movie) => (
+              <MovieCard key={movie._id || movie.slug} cdnBase={recommendationCdn} item={movie} />
+            ))}
           </div>
-        ) : null}
-      </div>
+        </section>
+      ) : null}
     </div>
   )
 }
