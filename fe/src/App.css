@@ -1297,6 +1297,209 @@ select:focus {
   font-weight: 650;
 }
 
+.auth-page.recovery-page {
+  position: relative;
+  isolation: isolate;
+  min-height: calc(100vh - 78px);
+  grid-template-columns: minmax(0, 520px);
+  justify-content: center;
+  gap: 0;
+  padding: clamp(36px, 7vh, 76px) 0;
+}
+
+.recovery-page::before {
+  position: absolute;
+  z-index: -1;
+  inset: 7% 15% auto;
+  height: 460px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 42% 40%, rgba(17, 215, 101, 0.13), transparent 52%),
+    radial-gradient(circle at 66% 48%, rgba(255, 122, 47, 0.1), transparent 58%);
+  content: '';
+  filter: blur(28px);
+  pointer-events: none;
+}
+
+.recovery-card {
+  position: relative;
+  overflow: hidden;
+  padding: 32px;
+  border-color: rgba(255, 255, 255, 0.11);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent 42%),
+    rgba(20, 22, 29, 0.96);
+}
+
+.recovery-card::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 8%, var(--accent), var(--brand), transparent 92%);
+  content: '';
+  opacity: 0.86;
+}
+
+.recovery-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 26px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 14px;
+  font-weight: 750;
+  transition: color 0.16s ease, transform 0.16s ease;
+}
+
+.recovery-back:hover {
+  color: #fff;
+  transform: translateX(-2px);
+}
+
+.recovery-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 18px;
+  border: 1px solid rgba(17, 215, 101, 0.3);
+  border-radius: 15px;
+  background: linear-gradient(145deg, rgba(17, 215, 101, 0.18), rgba(17, 215, 101, 0.06));
+  color: #67ee9f;
+  box-shadow: 0 12px 32px rgba(17, 215, 101, 0.1);
+}
+
+.recovery-header {
+  gap: 9px;
+  margin-bottom: 24px;
+}
+
+.recovery-header .auth-kicker {
+  width: fit-content;
+}
+
+.recovery-header p {
+  max-width: 430px;
+  line-height: 1.6;
+}
+
+.recovery-form {
+  gap: 18px;
+}
+
+.recovery-alert {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  line-height: 1.5;
+}
+
+.recovery-alert svg {
+  margin-top: 1px;
+}
+
+.recovery-result {
+  display: grid;
+  gap: 14px;
+}
+
+.recovery-result .recovery-alert {
+  margin-bottom: 0;
+}
+
+.recovery-result-copy {
+  margin: -2px 0 4px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.recovery-primary-action {
+  width: 100%;
+  min-height: 52px;
+  font-size: 16px;
+}
+
+.recovery-text-button {
+  justify-self: center;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.recovery-text-button:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.recovery-note {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 9px;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  color: var(--muted-2);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.recovery-note svg {
+  margin-top: 1px;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.password-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: -3px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.password-requirement {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.password-requirement span {
+  color: var(--accent);
+  font-weight: 950;
+}
+
+.password-visibility {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.password-visibility input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.button-spinner {
+  width: 17px;
+  height: 17px;
+  border: 2px solid rgba(255, 255, 255, 0.34);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.72s linear infinite;
+}
+
 .row {
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
@@ -1532,5 +1735,24 @@ select:focus {
 
   .auth-card h2 {
     font-size: 30px;
+  }
+
+  .auth-page.recovery-page {
+    min-height: auto;
+    padding: 20px 0 36px;
+  }
+
+  .recovery-card {
+    padding: 24px 20px;
+  }
+
+  .recovery-back {
+    margin-bottom: 22px;
+  }
+
+  .password-options {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 9px;
   }
 }
