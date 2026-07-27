@@ -25,7 +25,7 @@ export function MovieDetailPage() {
   const [loading, setLoading] = useState(true)
   const [people, setPeople] = useState(null)
   const [recommendations, setRecommendations] = useState(null)
-  const { user, accessToken } = useAuth()
+  const { user } = useAuth()
   const [isFavorite, setIsFavorite] = useState(false)
   const [favLoading, setFavLoading] = useState(false)
   const posterPreloadedRef = useRef(false)
@@ -34,21 +34,22 @@ export function MovieDetailPage() {
   useEffect(() => {
     if (!user || !movie?.data?.item) return;
 
+    let active = true
     const checkFavorite = async () => {
       try {
-        const res = await authFetch(`/api/favorites/${slug}/check`, accessToken);
-        // Handle unauthorized (token expired/invalid) - treat as not favorited, don't show error
-        if (res && res._unauthorized) {
-          setIsFavorite(false);
-        } else if (res && typeof res.favorited === 'boolean') {
+        const res = await authFetch(`/api/favorites/${slug}/check`);
+        if (active && typeof res.favorited === 'boolean') {
           setIsFavorite(res.favorited);
         }
       } catch (e) {
-        console.error('Error checking favorite:', e);
+        if (active) console.error('Error checking favorite:', e);
       }
     };
     checkFavorite();
-  }, [user, movie, accessToken, slug]);
+    return () => {
+      active = false
+    }
+  }, [user, movie, slug]);
 
   const toggleFavorite = async () => {
     if (!user) {
@@ -64,10 +65,10 @@ export function MovieDetailPage() {
 
     try {
       if (isFavorite) {
-        await authFetch(`/api/favorites/${slug}`, accessToken, { method: 'DELETE' });
+        await authFetch(`/api/favorites/${slug}`, { method: 'DELETE' });
         setIsFavorite(false);
       } else {
-        await authFetch('/api/favorites', accessToken, {
+        await authFetch('/api/favorites', {
           method: 'POST',
           body: JSON.stringify({
             movieSlug: slug,

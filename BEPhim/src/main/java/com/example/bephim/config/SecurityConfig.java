@@ -29,6 +29,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/register").permitAll()
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/api/auth/refresh").permitAll()
+                        .requestMatchers("/api/auth/logout").permitAll()
                         .requestMatchers("/api/auth/forgot-password").permitAll()
                         .requestMatchers("/api/auth/reset-password").permitAll()
                         .requestMatchers("/api/auth/verify-email").permitAll()
@@ -43,10 +44,6 @@ public class SecurityConfig {
                         .anyRequest().permitAll())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.decoder(jwtDecoder)))
-                // Form login for OAuth2 Authorization Code flow
-                .formLogin(form -> form
-                        .loginPage("/login")
-                        .permitAll())
                 .headers(headers -> SecurityHeadersConfig.applySecurityHeaders(headers, allowedFrameHosts))
                 .build();
     }

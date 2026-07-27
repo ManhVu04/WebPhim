@@ -15,15 +15,6 @@ function clampIndex(n, max) {
   return Math.min(n, max - 1)
 }
 
-// Simple debounce function
-function debounce(fn, delay) {
-  let timeoutId;
-  return (...args) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => fn(...args), delay);
-  };
-}
-
 export function WatchPage() {
   const { slug } = useParams()
   const [params, setParams] = useSearchParams()
@@ -39,11 +30,8 @@ export function WatchPage() {
   const [epIdx, setEpIdx] = useState(0)
   const [showAllEps, setShowAllEps] = useState(false)
   const [recommendations, setRecommendations] = useState(null)
-  const { accessToken } = useAuth()
+  const { user } = useAuth()
   const prefetchedEpRef = useRef(new Set())
-
-  // Debounced history save - use lazy ref initialization
-  const debouncedSaveHistory = useRef(null)
 
   useEffect(() => {
     let alive = true
@@ -79,34 +67,30 @@ export function WatchPage() {
   const safeEpIdx = useMemo(() => clampIndex(qEp, serverData.length), [qEp, serverData.length])
   const currentEp = serverData[safeEpIdx] || null
 
-  // Record history whenever user enters/changes episode (debounced to prevent API spam)
+  // Record only the last episode selected during the debounce window.
   useEffect(() => {
-    // Lazy init the debounced function on first render
-    if (!debouncedSaveHistory.current) {
-      debouncedSaveHistory.current = debounce((data) => {
-        if (!accessToken) return
-        authFetch('/api/history', accessToken, {
-          method: 'POST',
-          body: JSON.stringify(data)
-        }).catch(err => console.error('Error saving history:', err));
-      }, 1000)
-    }
+    if (!user || !item || !currentEp) return undefined
 
-    if (!accessToken || !item || !currentEp) return;
+    const timeoutId = window.setTimeout(() => {
+      authFetch('/api/history', {
+        method: 'POST',
+        body: JSON.stringify({
+          movieSlug: slug,
+          episodeSlug: currentEp.slug || currentEp.name || '',
+          serverIndex: safeServerIdx,
+          episodeIndex: safeEpIdx,
+          movieName: item.name,
+          movieOriginName: item.origin_name,
+          thumbUrl: buildThumbUrl(cdnBase, item.thumb_url),
+          posterUrl: buildPosterUrl(cdnBase, item.poster_url, item.thumb_url),
+          year: item.year,
+          episodeName: currentEp.name,
+        }),
+      }).catch((historyError) => console.error('Error saving history:', historyError))
+    }, 1000)
 
-    debouncedSaveHistory.current({
-      movieSlug: slug,
-      episodeSlug: currentEp.slug || currentEp.name || '',
-      serverIndex: safeServerIdx,
-      episodeIndex: safeEpIdx,
-      movieName: item.name,
-      movieOriginName: item.origin_name,
-      thumbUrl: buildThumbUrl(cdnBase, item.thumb_url),
-      posterUrl: buildPosterUrl(cdnBase, item.poster_url, item.thumb_url),
-      year: item.year,
-      episodeName: currentEp.name
-    });
-  }, [accessToken, item, currentEp, slug, safeServerIdx, safeEpIdx, cdnBase]);
+    return () => window.clearTimeout(timeoutId)
+  }, [user, item, currentEp, slug, safeServerIdx, safeEpIdx, cdnBase])
 
   // Sync state from URL when data is ready
   useEffect(() => {

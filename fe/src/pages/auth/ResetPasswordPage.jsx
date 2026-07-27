@@ -24,8 +24,8 @@ export function ResetPasswordPage() {
       setError('Mật khẩu xác nhận không khớp.');
       return;
     }
-    if (password.length < 6) {
-      setError('Mật khẩu phải có ít nhất 6 ký tự.');
+    if (password.length < 12) {
+      setError('Mật khẩu phải có ít nhất 12 ký tự.');
       return;
     }
 
@@ -57,7 +57,7 @@ export function ResetPasswordPage() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
-              minLength={6}
+              minLength={12}
               autoComplete="new-password"
               disabled={loading || !token}
               className="form-control"
@@ -71,7 +71,7 @@ export function ResetPasswordPage() {
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
               required
-              minLength={6}
+              minLength={12}
               autoComplete="new-password"
               disabled={loading || !token}
               className="form-control"

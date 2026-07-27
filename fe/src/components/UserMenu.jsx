@@ -19,8 +19,8 @@ export function UserMenu() {
     );
   }
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     setOpen(false);
     navigate('/');
   };

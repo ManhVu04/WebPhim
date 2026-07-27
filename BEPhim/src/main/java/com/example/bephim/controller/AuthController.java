@@ -1,36 +1,53 @@
 package com.example.bephim.controller;
 
-import com.example.bephim.dto.LoginRequest;
-import com.example.bephim.dto.ForgotPasswordRequest;
-import com.example.bephim.dto.RefreshTokenRequest;
-import com.example.bephim.dto.RegisterRequest;
 import com.example.bephim.dto.ChangePasswordRequest;
+import com.example.bephim.dto.ForgotPasswordRequest;
+import com.example.bephim.dto.LoginRequest;
+import com.example.bephim.dto.RegisterRequest;
 import com.example.bephim.dto.ResetPasswordRequest;
 import com.example.bephim.model.User;
 import com.example.bephim.service.RefreshTokenDenylistService;
 import com.example.bephim.service.UserService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
-import org.springframework.security.oauth2.jwt.*;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.oauth2.jwt.JwsHeader;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Map;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.HexFormat;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    static final String REFRESH_COOKIE = "webphim_refresh";
+    private static final Duration REFRESH_TOKEN_TTL = Duration.ofDays(7);
 
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
@@ -39,6 +56,8 @@ public class AuthController {
     private final RefreshTokenDenylistService refreshTokenDenylistService;
     private final String issuer;
     private final String publicUrl;
+    private final boolean refreshCookieSecure;
+    private final String refreshCookieSameSite;
 
     public AuthController(
             UserService userService,
@@ -47,7 +66,9 @@ public class AuthController {
             @Qualifier("refreshTokenJwtDecoder") JwtDecoder refreshTokenJwtDecoder,
             RefreshTokenDenylistService refreshTokenDenylistService,
             @Value("${app.auth.issuer}") String issuer,
-            @Value("${app.public-url}") String publicUrl) {
+            @Value("${app.public-url}") String publicUrl,
+            @Value("${app.auth.refresh-cookie.secure:false}") boolean refreshCookieSecure,
+            @Value("${app.auth.refresh-cookie.same-site:Lax}") String refreshCookieSameSite) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.jwtEncoder = jwtEncoder;
@@ -55,114 +76,80 @@ public class AuthController {
         this.refreshTokenDenylistService = refreshTokenDenylistService;
         this.issuer = issuer;
         this.publicUrl = publicUrl;
+        this.refreshCookieSecure = refreshCookieSecure;
+        this.refreshCookieSameSite = refreshCookieSameSite;
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest body) {
         User user = userService.register(body.username(), body.email(), body.password(), body.displayName(), publicUrl);
-
-        // Auto-login after register: issue tokens
-        Map<String, Object> tokens = issueTokens(user);
-        tokens.put("id", user.getId());
-        tokens.put("username", user.getUsername());
-        tokens.put("displayName", user.getDisplayName());
-        tokens.put("email", user.getEmail());
-        tokens.put("emailVerified", user.isEmailVerified());
-        return ResponseEntity.ok(tokens);
+        return tokenResponse(user, issueTokens(user));
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest body) {
-        String username = body.username();
-        String password = body.password();
-
-        User user = userService.findByUsername(username.trim().toLowerCase());
-        if (user == null || !passwordEncoder.matches(password, user.getPassword())) {
-            return ResponseEntity.status(401).body(Map.of("error", "Invalid username or password"));
+        User user = userService.findByUsername(body.username().trim().toLowerCase());
+        if (user == null || !passwordEncoder.matches(body.password(), user.getPassword())) {
+            return ResponseEntity.status(401).body(apiError("UNAUTHORIZED", "Invalid username or password", 401));
         }
-
-        Map<String, Object> tokens = issueTokens(user);
-        tokens.put("id", user.getId());
-        tokens.put("username", user.getUsername());
-        tokens.put("displayName", user.getDisplayName());
-        tokens.put("email", user.getEmail());
-        tokens.put("emailVerified", user.isEmailVerified());
-        return ResponseEntity.ok(tokens);
+        return tokenResponse(user, issueTokens(user));
     }
 
     @GetMapping("/me")
     public ResponseEntity<?> me(@AuthenticationPrincipal Jwt jwt) {
-        String userId = jwt.getClaimAsString("userId");
-        String username = jwt.getSubject();
-        String displayName = jwt.getClaimAsString("displayName");
-        String email = jwt.getClaimAsString("email");
-
         return ResponseEntity.ok(Map.of(
-                "id", userId != null ? userId : "",
-                "username", username != null ? username : "",
-                "displayName", displayName != null ? displayName : "",
-                "email", email != null ? email : "",
+                "id", valueOrEmpty(jwt.getClaimAsString("userId")),
+                "username", valueOrEmpty(jwt.getSubject()),
+                "displayName", valueOrEmpty(jwt.getClaimAsString("displayName")),
+                "email", valueOrEmpty(jwt.getClaimAsString("email")),
                 "emailVerified", Boolean.TRUE.equals(jwt.getClaim("emailVerified"))
         ));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refresh(@Valid @RequestBody RefreshTokenRequest body) {
-        String refreshToken = body.refreshToken();
+    public ResponseEntity<?> refresh(
+            @CookieValue(name = REFRESH_COOKIE, required = false) String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return ResponseEntity.status(401).body(apiError("UNAUTHORIZED", "Refresh cookie is missing", 401));
+        }
 
         try {
-            // Validate the refresh token
             Jwt decodedRefreshToken = refreshTokenJwtDecoder.decode(refreshToken);
-
-            // Check if it's actually a refresh token
-            String tokenType = decodedRefreshToken.getClaimAsString("tokenType");
-            if (!"refresh".equals(tokenType)) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Invalid token type"));
+            if (!"refresh".equals(decodedRefreshToken.getClaimAsString("tokenType"))) {
+                return ResponseEntity.status(401).body(apiError("UNAUTHORIZED", "Invalid token type", 401));
             }
 
             String userId = decodedRefreshToken.getClaimAsString("userId");
-            if (userId == null) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Invalid token: missing userId"));
+            Instant refreshExpiresAt = decodedRefreshToken.getExpiresAt();
+            if (userId == null || refreshExpiresAt == null) {
+                return ResponseEntity.status(401).body(apiError("UNAUTHORIZED", "Invalid refresh token", 401));
             }
 
-            // Find the user to get latest info and verify token version
             User user = userService.findById(userId);
-            if (user == null) {
-                return ResponseEntity.badRequest().body(Map.of("error", "User not found"));
+            if (user == null || tokenVersion(decodedRefreshToken) != user.getRefreshTokenVersion()) {
+                return ResponseEntity.status(401).body(apiError("UNAUTHORIZED", "Token revoked", 401));
             }
 
             String refreshTokenKey = resolveRefreshTokenKey(refreshToken, decodedRefreshToken);
-
-            Instant refreshExpiresAt = decodedRefreshToken.getExpiresAt();
-            if (refreshExpiresAt == null) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Invalid token: missing exp"));
-            }
-
-            // Verify refresh token version matches (invalidate old tokens if version changed)
-            Integer tokenVersion = decodedRefreshToken.getClaimAsString("refreshTokenVersion") != null
-                ? Integer.parseInt(decodedRefreshToken.getClaimAsString("refreshTokenVersion"))
-                : 0;
-            int userVersion = user.getRefreshTokenVersion();
-            if (tokenVersion != userVersion) {
-                return ResponseEntity.status(401).body(Map.of("error", "Token revoked"));
-            }
-
             if (!refreshTokenDenylistService.consume(refreshTokenKey, user.getId(), refreshExpiresAt)) {
-                return ResponseEntity.status(401).body(Map.of("error", "Refresh token already used"));
+                return ResponseEntity.status(401).body(apiError("UNAUTHORIZED", "Refresh token already used", 401));
             }
 
-            // Issue new tokens (version stays same since refresh successful)
-            Map<String, Object> tokens = issueTokens(user);
-            tokens.put("id", user.getId());
-            tokens.put("username", user.getUsername());
-            tokens.put("displayName", user.getDisplayName());
-            tokens.put("email", user.getEmail());
-            tokens.put("emailVerified", user.isEmailVerified());
-            return ResponseEntity.ok(tokens);
-        } catch (Exception e) {
-            // Token validation failed (expired, invalid signature, etc.)
-            return ResponseEntity.status(401).body(Map.of("error", "Invalid refresh token"));
+            return tokenResponse(user, issueTokens(user));
+        } catch (Exception ignored) {
+            return ResponseEntity.status(401)
+                    .header(HttpHeaders.SET_COOKIE, clearRefreshCookie().toString())
+                    .body(apiError("UNAUTHORIZED", "Invalid refresh token", 401));
         }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(
+            @CookieValue(name = REFRESH_COOKIE, required = false) String refreshToken) {
+        consumeRefreshTokenIfValid(refreshToken);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, clearRefreshCookie().toString())
+                .body(Map.of("message", "Logged out"));
     }
 
     @PostMapping("/forgot-password")
@@ -173,31 +160,21 @@ public class AuthController {
 
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest body) {
-        try {
-            userService.resetPassword(body.token(), body.newPassword());
-            return ResponseEntity.ok(Map.of("message", "Password reset"));
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
-        }
+        userService.resetPassword(body.token(), body.newPassword());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, clearRefreshCookie().toString())
+                .body(Map.of("message", "Password reset"));
     }
 
     @GetMapping("/verify-email")
     public ResponseEntity<?> verifyEmail(@RequestParam String token) {
-        try {
-            userService.verifyEmail(token);
-            return ResponseEntity.ok(Map.of("message", "Email verified"));
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
-        }
+        userService.verifyEmail(token);
+        return ResponseEntity.ok(Map.of("message", "Email verified"));
     }
 
     @PostMapping("/email/verification/resend")
     public ResponseEntity<?> resendEmailVerification(@AuthenticationPrincipal Jwt jwt) {
-        String userId = jwt.getClaimAsString("userId");
-        if (userId == null || userId.isBlank()) {
-            return ResponseEntity.status(401).body(Map.of("error", "Invalid token"));
-        }
-
+        String userId = requireUserId(jwt);
         userService.resendEmailVerification(userId, publicUrl);
         return ResponseEntity.ok(Map.of("message", "Verification email sent"));
     }
@@ -206,34 +183,37 @@ public class AuthController {
     public ResponseEntity<?> changePassword(
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody ChangePasswordRequest body) {
-        String userId = jwt.getClaimAsString("userId");
-        if (userId == null || userId.isBlank()) {
-            return ResponseEntity.status(401).body(Map.of("error", "Invalid token"));
-        }
-
-        try {
-            userService.changePassword(userId, body.currentPassword(), body.newPassword());
-            return ResponseEntity.ok(Map.of("message", "Password changed"));
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
-        }
+        userService.changePassword(requireUserId(jwt), body.currentPassword(), body.newPassword());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, clearRefreshCookie().toString())
+                .body(Map.of("message", "Password changed"));
     }
 
     @PostMapping("/sessions/revoke")
     public ResponseEntity<?> revokeAllSessions(@AuthenticationPrincipal Jwt jwt) {
-        String userId = jwt.getClaimAsString("userId");
-        if (userId == null || userId.isBlank()) {
-            return ResponseEntity.status(401).body(Map.of("error", "Invalid token"));
-        }
-
-        userService.revokeAllTokens(userId);
-        return ResponseEntity.ok(Map.of("message", "Sessions revoked"));
+        userService.revokeAllTokens(requireUserId(jwt));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, clearRefreshCookie().toString())
+                .body(Map.of("message", "Sessions revoked"));
     }
 
-    private Map<String, Object> issueTokens(User user) {
-        Instant now = Instant.now();
+    private ResponseEntity<?> tokenResponse(User user, TokenPair tokens) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("accessToken", tokens.accessToken());
+        body.put("expiresIn", 900);
+        body.put("id", user.getId());
+        body.put("username", user.getUsername());
+        body.put("displayName", user.getDisplayName());
+        body.put("email", valueOrEmpty(user.getEmail()));
+        body.put("emailVerified", user.isEmailVerified());
 
-        // Access token (15 min)
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshCookie(tokens.refreshToken()).toString())
+                .body(body);
+    }
+
+    private TokenPair issueTokens(User user) {
+        Instant now = Instant.now();
         JwtClaimsSet.Builder accessClaimsBuilder = JwtClaimsSet.builder()
                 .issuer(issuer)
                 .issuedAt(now)
@@ -247,17 +227,16 @@ public class AuthController {
         if (user.getEmail() != null) {
             accessClaimsBuilder.claim("email", user.getEmail());
         }
-        JwtClaimsSet accessClaims = accessClaimsBuilder.build();
 
-        String accessToken = jwtEncoder.encode(
-                JwtEncoderParameters.from(JwsHeader.with(SignatureAlgorithm.RS256).build(), accessClaims)
-        ).getTokenValue();
+        String accessToken = jwtEncoder.encode(JwtEncoderParameters.from(
+                JwsHeader.with(SignatureAlgorithm.RS256).build(),
+                accessClaimsBuilder.build()
+        )).getTokenValue();
 
-        // Refresh token (7 days) - include version for revocation
         JwtClaimsSet refreshClaims = JwtClaimsSet.builder()
                 .issuer(issuer)
                 .issuedAt(now)
-                .expiresAt(now.plus(7, ChronoUnit.DAYS))
+                .expiresAt(now.plus(REFRESH_TOKEN_TTL))
                 .subject(user.getUsername())
                 .id(UUID.randomUUID().toString())
                 .claim("userId", user.getId())
@@ -265,23 +244,76 @@ public class AuthController {
                 .claim("refreshTokenVersion", user.getRefreshTokenVersion())
                 .build();
 
-        String refreshToken = jwtEncoder.encode(
-                JwtEncoderParameters.from(JwsHeader.with(SignatureAlgorithm.RS256).build(), refreshClaims)
-        ).getTokenValue();
+        String refreshToken = jwtEncoder.encode(JwtEncoderParameters.from(
+                JwsHeader.with(SignatureAlgorithm.RS256).build(),
+                refreshClaims
+        )).getTokenValue();
+        return new TokenPair(accessToken, refreshToken);
+    }
 
-        return new java.util.HashMap<>(Map.of(
-                "accessToken", accessToken,
-                "refreshToken", refreshToken,
-                "expiresIn", 900 // 15 min in seconds
-        ));
+    private void consumeRefreshTokenIfValid(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return;
+        }
+        try {
+            Jwt decoded = refreshTokenJwtDecoder.decode(refreshToken);
+            Instant expiresAt = decoded.getExpiresAt();
+            String userId = decoded.getClaimAsString("userId");
+            if (expiresAt != null && userId != null) {
+                refreshTokenDenylistService.consume(resolveRefreshTokenKey(refreshToken, decoded), userId, expiresAt);
+            }
+        } catch (Exception ignored) {
+            // Logout remains idempotent even for expired or malformed cookies.
+        }
+    }
+
+    private ResponseCookie refreshCookie(String token) {
+        return ResponseCookie.from(REFRESH_COOKIE, token)
+                .httpOnly(true)
+                .secure(refreshCookieSecure)
+                .sameSite(refreshCookieSameSite)
+                .path("/api/auth")
+                .maxAge(REFRESH_TOKEN_TTL)
+                .build();
+    }
+
+    private ResponseCookie clearRefreshCookie() {
+        return ResponseCookie.from(REFRESH_COOKIE, "")
+                .httpOnly(true)
+                .secure(refreshCookieSecure)
+                .sameSite(refreshCookieSameSite)
+                .path("/api/auth")
+                .maxAge(Duration.ZERO)
+                .build();
+    }
+
+    private static int tokenVersion(Jwt token) {
+        Object claim = token.getClaim("refreshTokenVersion");
+        if (claim instanceof Number number) {
+            return number.intValue();
+        }
+        return claim == null ? 0 : Integer.parseInt(claim.toString());
+    }
+
+    private static String requireUserId(Jwt jwt) {
+        String userId = jwt == null ? null : jwt.getClaimAsString("userId");
+        if (userId == null || userId.isBlank()) {
+            throw new IllegalArgumentException("Invalid token");
+        }
+        return userId;
+    }
+
+    private static Map<String, Object> apiError(String code, String message, int status) {
+        return Map.of("error", code, "message", message, "status", status);
+    }
+
+    private static String valueOrEmpty(String value) {
+        return value == null ? "" : value;
     }
 
     private static String resolveRefreshTokenKey(String rawRefreshToken, Jwt decodedRefreshToken) {
         String jti = decodedRefreshToken.getId();
-        if (jti != null && !jti.isBlank()) {
-            return "jti:" + jti;
-        }
-        return "fp:" + fingerprint(rawRefreshToken);
+        return jti != null && !jti.isBlank() ? "jti:" + jti : "fp:" + fingerprint(rawRefreshToken);
     }
 
     private static String fingerprint(String token) {
@@ -292,5 +324,8 @@ public class AuthController {
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 is not available", e);
         }
+    }
+
+    private record TokenPair(String accessToken, String refreshToken) {
     }
 }

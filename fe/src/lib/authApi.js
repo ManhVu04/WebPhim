@@ -1,169 +1,229 @@
 /**
- * Auth API — communicate with Spring Boot auth endpoints.
- * Token stored in memory (NOT localStorage) for XSS safety.
+ * Authentication API and in-memory session store.
+ *
+ * Access tokens never enter Web Storage. The refresh token is an HttpOnly
+ * cookie managed by the backend and is therefore unavailable to JavaScript.
  */
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/api\/ophim$/, '') || '';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/api\/ophim$/, '') || ''
+const sessionListeners = new Set()
+
+let authSession = { accessToken: null, user: null }
+let refreshPromise = null
+
+export class ApiError extends Error {
+  constructor(message, status, code = 'API_ERROR') {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+    this.code = code
+  }
+}
 
 function errorMessage(data, fallback) {
-  return data.message || data.error || fallback;
+  return data?.message || data?.error || fallback
 }
 
 async function parseApiResponse(res) {
-  const text = await res.text();
-  if (!text) return {};
+  const text = await res.text()
+  if (!text) return {}
   try {
-    return JSON.parse(text);
+    return JSON.parse(text)
   } catch {
-    return { message: text };
+    return { message: text }
   }
+}
+
+function userFromResponse(data) {
+  if (!data?.username) return null
+  return {
+    id: data.id,
+    username: data.username,
+    displayName: data.displayName,
+    email: data.email,
+    emailVerified: data.emailVerified,
+  }
+}
+
+function publishSession(data) {
+  authSession = data?.accessToken
+    ? { accessToken: data.accessToken, user: userFromResponse(data) }
+    : { accessToken: null, user: null }
+  sessionListeners.forEach((listener) => listener(authSession))
+  return authSession
+}
+
+export function subscribeAuthSession(listener) {
+  sessionListeners.add(listener)
+  listener(authSession)
+  return () => sessionListeners.delete(listener)
+}
+
+export function clearAuthSession() {
+  publishSession(null)
+}
+
+function decodeJwtPayload(token) {
+  try {
+    const payload = token.split('.')[1]
+    if (!payload) return null
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')
+    return JSON.parse(atob(padded))
+  } catch {
+    return null
+  }
+}
+
+function isAccessTokenExpiring(token) {
+  const exp = decodeJwtPayload(token)?.exp
+  return !exp || exp * 1000 <= Date.now() + 30_000
+}
+
+async function request(path, options = {}) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    credentials: 'include',
+    ...options,
+    headers: {
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      ...options.headers,
+    },
+  })
+  const data = await parseApiResponse(res)
+  if (!res.ok) {
+    throw new ApiError(errorMessage(data, `HTTP ${res.status}`), res.status, data.error)
+  }
+  return data
 }
 
 export async function apiLogin(username, password) {
-  const res = await fetch(`${API_BASE}/api/auth/login`, {
+  const data = await request('/api/auth/login', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
-  });
-  const data = await parseApiResponse(res);
-  if (!res.ok) throw new Error(errorMessage(data, 'Login failed'));
-  return data; // { accessToken, refreshToken, expiresIn, id, username, displayName }
+  })
+  publishSession(data)
+  return data
 }
 
 export async function apiRegister(username, email, password, displayName) {
-  const res = await fetch(`${API_BASE}/api/auth/register`, {
+  const data = await request('/api/auth/register', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, email, password, displayName }),
-  });
-  const data = await parseApiResponse(res);
-  if (!res.ok) throw new Error(errorMessage(data, 'Registration failed'));
-  return data; // same shape as login
+  })
+  publishSession(data)
+  return data
 }
 
-export async function apiGetMe(accessToken) {
-  const res = await fetch(`${API_BASE}/api/auth/me`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (!res.ok) return null;
-  return res.json();
+export async function refreshSession() {
+  if (!refreshPromise) {
+    refreshPromise = request('/api/auth/refresh', { method: 'POST' })
+      .then((data) => {
+        publishSession(data)
+        return data
+      })
+      .catch((error) => {
+        if (error instanceof ApiError && (error.status === 400 || error.status === 401)) {
+          clearAuthSession()
+        }
+        throw error
+      })
+      .finally(() => {
+        refreshPromise = null
+      })
+  }
+  return refreshPromise
 }
 
-export async function apiRefreshToken(refreshToken) {
-  const res = await fetch(`${API_BASE}/api/auth/refresh`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refreshToken }),
-  });
-  const data = await parseApiResponse(res);
-  if (!res.ok) throw new Error(errorMessage(data, 'Token refresh failed'));
-  return data; // { accessToken, refreshToken, expiresIn, id, username, displayName }
+export async function apiGetMe() {
+  return authFetch('/api/auth/me')
 }
 
-export async function apiChangePassword(accessToken, currentPassword, newPassword) {
-  const data = await authFetch('/api/auth/change-password', accessToken, {
+export async function apiLogout() {
+  try {
+    await request('/api/auth/logout', { method: 'POST' })
+  } finally {
+    clearAuthSession()
+  }
+}
+
+export async function apiChangePassword(currentPassword, newPassword) {
+  return authFetch('/api/auth/change-password', {
     method: 'POST',
     body: JSON.stringify({ currentPassword, newPassword }),
-  });
-  if (data?._unauthorized) throw new Error('Session expired');
-  if (data?._error) throw new Error(errorMessage(data, 'Password change failed'));
-  return data;
+  })
 }
 
-export async function apiRevokeAllSessions(accessToken) {
-  const data = await authFetch('/api/auth/sessions/revoke', accessToken, {
-    method: 'POST',
-  });
-  if (data?._unauthorized) throw new Error('Session expired');
-  if (data?._error) throw new Error(errorMessage(data, 'Session revoke failed'));
-  return data;
+export async function apiRevokeAllSessions() {
+  const data = await authFetch('/api/auth/sessions/revoke', { method: 'POST' })
+  clearAuthSession()
+  return data
 }
 
 export async function apiForgotPassword(email) {
-  const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+  return request('/api/auth/forgot-password', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
-  });
-  const data = await parseApiResponse(res);
-  if (!res.ok) throw new Error(errorMessage(data, 'Password reset request failed'));
-  return data;
+  })
 }
 
 export async function apiResetPassword(token, newPassword) {
-  const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
+  return request('/api/auth/reset-password', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token, newPassword }),
-  });
-  const data = await parseApiResponse(res);
-  if (!res.ok) throw new Error(errorMessage(data, 'Password reset failed'));
-  return data;
+  })
 }
 
 export async function apiVerifyEmail(token) {
-  const res = await fetch(`${API_BASE}/api/auth/verify-email?token=${encodeURIComponent(token)}`);
-  const data = await parseApiResponse(res);
-  if (!res.ok) throw new Error(errorMessage(data, 'Email verification failed'));
-  return data;
+  return request(`/api/auth/verify-email?token=${encodeURIComponent(token)}`)
 }
 
-export async function apiResendEmailVerification(accessToken) {
-  const data = await authFetch('/api/auth/email/verification/resend', accessToken, {
-    method: 'POST',
-  });
-  if (data?._unauthorized) throw new Error('Session expired');
-  if (data?._error) throw new Error(errorMessage(data, 'Verification email resend failed'));
-  return data;
+export async function apiResendEmailVerification() {
+  return authFetch('/api/auth/email/verification/resend', { method: 'POST' })
 }
 
 /**
- * Authenticated fetch — attaches Bearer token, returns JSON.
- * Automatically retries with refreshed token on 401.
- * Returns { _unauthorized: true } only if refresh also fails.
+ * Authenticated request with a single refresh-and-retry attempt.
+ * Only same-origin relative API paths are accepted to prevent bearer leakage.
  */
-export async function authFetch(path, accessToken, options = {}) {
-  const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
+export async function authFetch(path, options = {}) {
+  if (typeof path !== 'string' || !path.startsWith('/') || path.startsWith('//')) {
+    throw new TypeError('authFetch only accepts same-origin relative paths')
+  }
 
-  const doFetch = (token) => fetch(url, {
+  if (authSession.accessToken && isAccessTokenExpiring(authSession.accessToken)) {
+    await refreshSession()
+  }
+
+  const doFetch = (token) => fetch(`${API_BASE}${path}`, {
+    credentials: 'include',
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
-  });
+  })
 
-  let res = await doFetch(accessToken);
-
-  // Auto-refresh on 401
+  let res = await doFetch(authSession.accessToken)
   if (res.status === 401) {
     try {
-      const saved = sessionStorage.getItem('webphim_auth');
-      if (!saved) return { _unauthorized: true };
-      const { refreshToken } = JSON.parse(saved);
-      if (!refreshToken) return { _unauthorized: true };
-
-      const refreshed = await apiRefreshToken(refreshToken);
-
-      // Persist the new tokens
-      const current = JSON.parse(sessionStorage.getItem('webphim_auth') || '{}');
-      sessionStorage.setItem('webphim_auth', JSON.stringify({
-        ...current,
-        accessToken: refreshed.accessToken,
-        refreshToken: refreshed.refreshToken,
-      }));
-
-      // Retry with new access token
-      res = await doFetch(refreshed.accessToken);
-    } catch {
-      return { _unauthorized: true };
+      await refreshSession()
+    } catch (error) {
+      if (error instanceof ApiError && (error.status === 400 || error.status === 401)) {
+        throw new ApiError('Session expired', 401, 'UNAUTHORIZED')
+      }
+      throw error
     }
+    res = await doFetch(authSession.accessToken)
   }
 
-  if (res.status === 401) return { _unauthorized: true };
-  const data = await parseApiResponse(res);
-  if (!Object.keys(data).length) return res.ok ? {} : { _error: true, status: res.status };
-  if (!res.ok) throw new Error(errorMessage(data, `HTTP ${res.status}`));
-  return data;
+  const data = await parseApiResponse(res)
+  if (res.status === 401) {
+    clearAuthSession()
+    throw new ApiError(errorMessage(data, 'Session expired'), 401, 'UNAUTHORIZED')
+  }
+  if (!res.ok) {
+    throw new ApiError(errorMessage(data, `HTTP ${res.status}`), res.status, data.error)
+  }
+  return data
 }

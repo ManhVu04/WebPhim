@@ -22,8 +22,8 @@ export function RegisterPage() {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Mật khẩu phải có ít nhất 6 ký tự.');
+    if (password.length < 12) {
+      setError('Mật khẩu phải có ít nhất 12 ký tự.');
       return;
     }
 
@@ -96,7 +96,7 @@ export function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={12}
               autoComplete="new-password"
               disabled={loading}
               className="form-control"
@@ -110,7 +110,7 @@ export function RegisterPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={12}
               autoComplete="new-password"
               disabled={loading}
               className="form-control"

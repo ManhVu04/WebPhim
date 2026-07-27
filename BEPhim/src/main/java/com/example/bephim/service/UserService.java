@@ -57,8 +57,8 @@ public class UserService implements UserDetailsService {
         if (username == null || username.trim().length() < 3) {
             throw new IllegalArgumentException("Username must be at least 3 characters");
         }
-        if (password == null || password.length() < 6) {
-            throw new IllegalArgumentException("Password must be at least 6 characters");
+        if (password == null || password.length() < 12) {
+            throw new IllegalArgumentException("Password must be at least 12 characters");
         }
 
         User user = new User();
@@ -88,8 +88,8 @@ public class UserService implements UserDetailsService {
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
             throw new IllegalArgumentException("Current password is incorrect");
         }
-        if (newPassword == null || newPassword.length() < 6) {
-            throw new IllegalArgumentException("Password must be at least 6 characters");
+        if (newPassword == null || newPassword.length() < 12) {
+            throw new IllegalArgumentException("Password must be at least 12 characters");
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
@@ -108,8 +108,8 @@ public class UserService implements UserDetailsService {
     }
 
     public void resetPassword(String token, String newPassword) {
-        if (newPassword == null || newPassword.length() < 6) {
-            throw new IllegalArgumentException("Password must be at least 6 characters");
+        if (newPassword == null || newPassword.length() < 12) {
+            throw new IllegalArgumentException("Password must be at least 12 characters");
         }
 
         User user = userRepository.findByPasswordResetTokenHash(hashToken(token))

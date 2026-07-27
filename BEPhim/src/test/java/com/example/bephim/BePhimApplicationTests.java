@@ -22,7 +22,10 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "app.jwt.key-file=/tmp/webphim-test-jwt-rsa-key.jwk"
+)
 @AutoConfigureTestRestTemplate
 class BePhimApplicationTests {
 
@@ -74,9 +77,9 @@ class BePhimApplicationTests {
     void refreshRejectsMissingToken() {
         ResponseEntity<Map> response = postJson("/api/auth/refresh", "{}");
 
-        assertThat(response.getStatusCode().value()).isEqualTo(400);
-        assertThat(response.getBody()).containsEntry("error", "BAD_REQUEST");
-        assertThat(response.getBody()).containsEntry("status", 400);
+        assertThat(response.getStatusCode().value()).isEqualTo(401);
+        assertThat(response.getBody()).containsEntry("error", "UNAUTHORIZED");
+        assertThat(response.getBody()).containsEntry("status", 401);
     }
 
     @Test

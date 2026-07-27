@@ -4,7 +4,7 @@ import { useAuth } from '../../lib/auth.jsx';
 import { apiChangePassword, apiResendEmailVerification, apiRevokeAllSessions } from '../../lib/authApi.js';
 
 export function AccountSecurityPage() {
-  const { accessToken, logout, user } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -28,14 +28,14 @@ export function AccountSecurityPage() {
       setError('Mật khẩu xác nhận không khớp.');
       return;
     }
-    if (newPassword.length < 6) {
-      setError('Mật khẩu mới phải có ít nhất 6 ký tự.');
+    if (newPassword.length < 12) {
+      setError('Mật khẩu mới phải có ít nhất 12 ký tự.');
       return;
     }
 
     setSubmitting(true);
     try {
-      await apiChangePassword(accessToken, currentPassword, newPassword);
+      await apiChangePassword(currentPassword, newPassword);
       setMessage('Đã đổi mật khẩu. Vui lòng đăng nhập lại trên thiết bị này.');
       setCurrentPassword('');
       setNewPassword('');
@@ -55,7 +55,7 @@ export function AccountSecurityPage() {
     clearFeedback();
     setRevoking(true);
     try {
-      await apiRevokeAllSessions(accessToken);
+      await apiRevokeAllSessions();
       setMessage('Đã thu hồi các phiên đăng nhập. Vui lòng đăng nhập lại trên thiết bị này.');
       window.setTimeout(() => {
         logout();
@@ -72,7 +72,7 @@ export function AccountSecurityPage() {
     clearFeedback();
     setResending(true);
     try {
-      await apiResendEmailVerification(accessToken);
+      await apiResendEmailVerification();
       setMessage('Đã gửi lại email xác minh.');
     } catch (err) {
       setError(err.message || 'Không thể gửi lại email xác minh.');
@@ -137,7 +137,7 @@ export function AccountSecurityPage() {
               value={newPassword}
               onChange={(event) => setNewPassword(event.target.value)}
               required
-              minLength={6}
+              minLength={12}
               autoComplete="new-password"
               disabled={submitting || revoking}
               className="form-control"
@@ -152,7 +152,7 @@ export function AccountSecurityPage() {
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
               required
-              minLength={6}
+              minLength={12}
               autoComplete="new-password"
               disabled={submitting || revoking}
               className="form-control"
