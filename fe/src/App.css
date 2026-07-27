@@ -1538,6 +1538,374 @@ select:focus {
   color: #67ee9f;
 }
 
+.account-security-page {
+  display: grid;
+  gap: 22px;
+  padding: 34px 0 64px;
+}
+
+.security-hero {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  overflow: hidden;
+  min-height: 156px;
+  padding: 28px 30px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  background:
+    linear-gradient(120deg, rgba(17, 215, 101, 0.11), transparent 38%),
+    radial-gradient(circle at 88% 20%, rgba(255, 122, 47, 0.12), transparent 34%),
+    rgba(20, 22, 29, 0.94);
+  box-shadow: var(--shadow-soft);
+}
+
+.security-hero::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 38px 38px;
+  content: '';
+  mask-image: linear-gradient(90deg, #000, transparent 76%);
+}
+
+.security-hero-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 62px;
+  height: 62px;
+  border: 1px solid rgba(17, 215, 101, 0.28);
+  border-radius: 17px;
+  background: rgba(17, 215, 101, 0.1);
+  color: #67ee9f;
+  box-shadow: 0 14px 36px rgba(17, 215, 101, 0.1);
+}
+
+.security-hero-copy {
+  display: grid;
+  gap: 7px;
+}
+
+.security-hero-copy .auth-kicker {
+  width: fit-content;
+}
+
+.security-hero h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(28px, 3vw, 40px);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+}
+
+.security-hero p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.security-identity {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 210px;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.security-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, var(--brand), #e9591b);
+  color: #fff;
+  font-weight: 950;
+}
+
+.security-identity div {
+  display: grid;
+  min-width: 0;
+}
+
+.security-identity strong,
+.security-identity span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.security-identity strong {
+  color: #fff;
+  font-size: 14px;
+}
+
+.security-identity div span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.security-feedback {
+  display: grid;
+  grid-template-columns: 21px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.security-feedback svg {
+  margin-top: 1px;
+}
+
+.security-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.42fr) minmax(310px, 0.78fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.security-card {
+  position: relative;
+  overflow: hidden;
+  padding: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent 42%),
+    rgba(20, 22, 29, 0.94);
+  box-shadow: var(--shadow-soft);
+}
+
+.security-card::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent 70%);
+  content: '';
+  opacity: 0.72;
+}
+
+.security-card-header {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 13px;
+  align-items: start;
+  margin-bottom: 24px;
+}
+
+.security-card-header-compact {
+  margin-bottom: 19px;
+}
+
+.security-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(17, 215, 101, 0.24);
+  border-radius: 13px;
+  background: rgba(17, 215, 101, 0.085);
+  color: #67ee9f;
+}
+
+.security-card-icon-email {
+  border-color: rgba(59, 130, 246, 0.26);
+  background: rgba(59, 130, 246, 0.09);
+  color: #93c5fd;
+}
+
+.security-card-icon-session {
+  border-color: rgba(255, 122, 47, 0.25);
+  background: rgba(255, 122, 47, 0.09);
+  color: #ffb36e;
+}
+
+.security-eyebrow {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--muted-2);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.security-card h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 22px;
+  line-height: 1.25;
+}
+
+.security-card-header p,
+.security-card-copy {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.security-password-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px 14px;
+}
+
+.security-field-wide {
+  grid-column: 1 / -1;
+}
+
+.security-password-options {
+  margin-top: -2px;
+}
+
+.security-submit {
+  max-width: 300px;
+  margin-top: 0;
+}
+
+.security-info-note {
+  display: grid;
+  grid-template-columns: 19px minmax(0, 1fr);
+  gap: 9px;
+  margin-top: 22px;
+  padding: 14px;
+  border: 1px solid rgba(59, 130, 246, 0.16);
+  border-radius: 10px;
+  background: rgba(59, 130, 246, 0.055);
+  color: rgba(191, 219, 254, 0.72);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.security-info-note svg {
+  margin-top: 1px;
+  color: #93c5fd;
+}
+
+.security-sidebar {
+  display: grid;
+  gap: 22px;
+}
+
+.security-email-value {
+  overflow: hidden;
+  margin-bottom: 12px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.security-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(17, 215, 101, 0.22);
+  border-radius: 999px;
+  background: rgba(17, 215, 101, 0.08);
+  color: #86efac;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.security-status-pill-pending {
+  border-color: rgba(245, 158, 11, 0.24);
+  background: rgba(245, 158, 11, 0.09);
+  color: #fcd34d;
+}
+
+.security-secondary-action,
+.security-danger-button {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 18px;
+}
+
+.security-secondary-action .button-spinner {
+  width: 15px;
+  height: 15px;
+}
+
+.security-danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 15px;
+  border: 1px solid rgba(239, 68, 68, 0.38);
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.09);
+  color: #fca5a5;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 850;
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+}
+
+.security-danger-button:hover:not(:disabled) {
+  border-color: rgba(239, 68, 68, 0.64);
+  background: rgba(239, 68, 68, 0.16);
+  color: #fecaca;
+}
+
+.security-danger-button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.security-confirm {
+  display: grid;
+  gap: 5px;
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.065);
+}
+
+.security-confirm strong {
+  color: #fecaca;
+  font-size: 14px;
+}
+
+.security-confirm > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.security-confirm-actions {
+  display: grid;
+  grid-template-columns: 0.72fr 1.28fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.security-confirm-actions .btn,
+.security-confirm-actions .security-danger-button {
+  min-height: 40px;
+  margin: 0;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
 .auth-page.recovery-page {
   position: relative;
   isolation: isolate;
@@ -1857,6 +2225,14 @@ select:focus {
     align-items: flex-start;
     flex-direction: column;
   }
+
+  .security-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .security-sidebar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 760px) {
@@ -2014,6 +2390,53 @@ select:focus {
   .account-auth-links {
     align-items: center;
     flex-direction: column;
+  }
+
+  .account-security-page {
+    padding: 20px 0 40px;
+  }
+
+  .security-hero {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 22px 20px;
+    border-radius: 14px;
+  }
+
+  .security-hero-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+  }
+
+  .security-hero-copy .auth-kicker {
+    display: none;
+  }
+
+  .security-hero p {
+    font-size: 13px;
+  }
+
+  .security-identity {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  .security-card {
+    padding: 22px 20px;
+    border-radius: 13px;
+  }
+
+  .security-password-form,
+  .security-sidebar {
+    grid-template-columns: 1fr;
+  }
+
+  .security-field-wide {
+    grid-column: auto;
+  }
+
+  .security-submit {
+    max-width: none;
   }
 
   .auth-page.recovery-page {
