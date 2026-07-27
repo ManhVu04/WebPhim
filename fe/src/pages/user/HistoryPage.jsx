@@ -1,41 +1,70 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch } from '../../lib/authApi.js';
 import { MovieCard } from '../../components/MovieCard.jsx';
+import { Pagination } from '../../components/Pagination.jsx';
 import { Loading as State, ErrorState } from '../../components/State.jsx';
+
+const PAGE_SIZE = 24;
 
 export function HistoryPage() {
   const navigate = useNavigate();
-  const [data, setData] = useState([]);
+  const [searchParams] = useSearchParams();
+  const requestedPage = Number.parseInt(searchParams.get('page') || '1', 10);
+  const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const [result, setResult] = useState({ items: [], totalItems: 0, currentPage: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    let active = true;
+
     async function loadHistory() {
       try {
         setLoading(true);
-        const res = await authFetch('/api/history');
-        setData(res.items || res || []);
+        setError(null);
+        const res = await authFetch(`/api/history?page=${page - 1}&size=${PAGE_SIZE}`);
+        const totalPages = Number(res.totalPages || 0);
+        if (active && totalPages > 0 && page > totalPages) {
+          navigate(`/lich-su${totalPages === 1 ? '' : `?page=${totalPages}`}`, { replace: true });
+          return;
+        }
+        if (active) {
+          setResult({
+            items: res.items || [],
+            totalItems: Number(res.totalItems || 0),
+            currentPage: Number(res.currentPage || 0),
+          });
+        }
       } catch (err) {
+        if (!active) return;
         if (err.status === 401) {
           navigate('/dang-nhap', { state: { from: { pathname: '/lich-su' } }, replace: true });
           return;
         }
         setError(err.message);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     }
 
     loadHistory();
-  }, [navigate]);
+    return () => {
+      active = false;
+    };
+  }, [navigate, page]);
+
+  const data = result.items;
 
   const handleClearAll = async () => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử xem phim?')) return;
 
     try {
       await authFetch('/api/history', { method: 'DELETE' });
-      setData([]);
+      setResult({ items: [], totalItems: 0, currentPage: 0 });
+      if (page > 1) {
+        navigate('/lich-su', { replace: true });
+      }
     } catch (err) {
       if (err.status === 401) {
         navigate('/dang-nhap', { state: { from: { pathname: '/lich-su' } }, replace: true });
@@ -66,30 +95,37 @@ export function HistoryPage() {
           <Link to="/" className="btn btnPrimary">Khám phá ngay</Link>
         </div>
       ) : (
-        <div className="grid">
-          {data.map((item) => (
-            <div key={item.id} className="history-item-wrapper">
-              <MovieCard
-                item={{
-                  slug: item.movieSlug,
-                  name: item.movieName,
-                  origin_name: item.movieOriginName,
-                  thumb_url: item.thumbUrl,
-                  poster_url: item.posterUrl,
-                  year: item.year
-                }}
-              />
-              {item.episodeName && (
-                <div className="history-meta">
-                  <span>Tập {item.episodeName}</span>
-                  <span className="muted" style={{ fontSize: '11px' }}>
-                    {new Date(item.watchedAt).toLocaleDateString('vi-VN')}
-                  </span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+        <>
+          <div className="grid">
+            {data.map((item) => (
+              <div key={item.id} className="history-item-wrapper">
+                <MovieCard
+                  item={{
+                    slug: item.movieSlug,
+                    name: item.movieName,
+                    origin_name: item.movieOriginName,
+                    thumb_url: item.thumbUrl,
+                    poster_url: item.posterUrl,
+                    year: item.year
+                  }}
+                />
+                {item.episodeName && (
+                  <div className="history-meta">
+                    <span>Tập {item.episodeName}</span>
+                    <span className="muted" style={{ fontSize: '11px' }}>
+                      {new Date(item.watchedAt).toLocaleDateString('vi-VN')}
+                    </span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <Pagination pagination={{
+            currentPage: result.currentPage + 1,
+            totalItems: result.totalItems,
+            totalItemsPerPage: PAGE_SIZE,
+          }} />
+        </>
       )}
     </div>
   );

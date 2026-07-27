@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -26,7 +27,7 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final EmailService emailService;
+    private final EmailOutboxService emailOutboxService;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
@@ -46,31 +47,32 @@ public class UserService implements UserDetailsService {
                 .build();
     }
 
+    @Transactional
     public User register(String username, String email, String password, String displayName, String publicUrl) {
-        if (userRepository.existsByUsername(username)) {
-            throw new IllegalArgumentException("Username already exists");
+        String normalizedUsername = normalizeUsername(username);
+        if (userRepository.existsByUsername(normalizedUsername)) {
+            throw new IllegalStateException("Username already exists");
         }
         String normalizedEmail = normalizeEmail(email);
         if (userRepository.existsByEmail(normalizedEmail)) {
-            throw new IllegalArgumentException("Email already exists");
-        }
-        if (username == null || username.trim().length() < 3) {
-            throw new IllegalArgumentException("Username must be at least 3 characters");
+            throw new IllegalStateException("Email already exists");
         }
         if (password == null || password.length() < 12) {
             throw new IllegalArgumentException("Password must be at least 12 characters");
         }
 
         User user = new User();
-        user.setUsername(username.trim().toLowerCase());
+        user.setUsername(normalizedUsername);
         user.setEmail(normalizedEmail);
         user.setPassword(passwordEncoder.encode(password));
-        user.setDisplayName(displayName != null ? displayName.trim() : username);
+        user.setDisplayName(displayName != null ? displayName.trim() : normalizedUsername);
         user.setRoles(List.of("USER"));
         user.setCreatedAt(Instant.now());
         String verificationToken = issueEmailVerificationToken(user);
         User saved = userRepository.save(user);
-        emailService.sendEmailVerification(saved.getEmail(), buildUrl(publicUrl, "/xac-minh-email", verificationToken));
+        emailOutboxService.enqueueEmailVerification(
+                saved.getEmail(),
+                buildUrl(publicUrl, "/xac-minh-email", verificationToken));
         return saved;
     }
 
@@ -97,13 +99,16 @@ public class UserService implements UserDetailsService {
         userRepository.save(user);
     }
 
+    @Transactional
     public void requestPasswordReset(String email, String publicUrl) {
         userRepository.findByEmail(normalizeEmail(email)).ifPresent(user -> {
             String token = newToken();
             user.setPasswordResetTokenHash(hashToken(token));
             user.setPasswordResetExpiresAt(Instant.now().plus(30, ChronoUnit.MINUTES));
             userRepository.save(user);
-            emailService.sendPasswordReset(user.getEmail(), buildUrl(publicUrl, "/dat-lai-mat-khau", token));
+            emailOutboxService.enqueuePasswordReset(
+                    user.getEmail(),
+                    buildUrl(publicUrl, "/dat-lai-mat-khau", token));
         });
     }
 
@@ -140,6 +145,7 @@ public class UserService implements UserDetailsService {
         userRepository.save(user);
     }
 
+    @Transactional
     public void resendEmailVerification(String userId, String publicUrl) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -149,7 +155,9 @@ public class UserService implements UserDetailsService {
 
         String token = issueEmailVerificationToken(user);
         User saved = userRepository.save(user);
-        emailService.sendEmailVerification(saved.getEmail(), buildUrl(publicUrl, "/xac-minh-email", token));
+        emailOutboxService.enqueueEmailVerification(
+                saved.getEmail(),
+                buildUrl(publicUrl, "/xac-minh-email", token));
     }
 
     /**
@@ -187,6 +195,13 @@ public class UserService implements UserDetailsService {
             throw new IllegalArgumentException("Email is required");
         }
         return email.trim().toLowerCase();
+    }
+
+    private static String normalizeUsername(String username) {
+        if (username == null || username.trim().length() < 3) {
+            throw new IllegalArgumentException("Username must be at least 3 characters");
+        }
+        return username.trim().toLowerCase();
     }
 
     private static String buildUrl(String publicUrl, String path, String token) {

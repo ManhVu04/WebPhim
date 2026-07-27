@@ -4,11 +4,14 @@ import com.example.bephim.dto.WatchHistoryRequest;
 import com.example.bephim.model.WatchHistory;
 import com.example.bephim.service.WatchHistoryService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -16,6 +19,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/history")
 @RequiredArgsConstructor
+@Validated
 public class WatchHistoryController {
 
     private final WatchHistoryService watchHistoryService;
@@ -23,8 +27,8 @@ public class WatchHistoryController {
     @GetMapping({"", "/"})
     public ResponseEntity<?> list(
             @AuthenticationPrincipal Jwt jwt,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "24") int size) {
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "24") @Min(1) @Max(100) int size) {
         if (jwt == null) {
             return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
         }

@@ -1,14 +1,17 @@
 package com.example.bephim.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import java.util.Map;
 
@@ -58,6 +61,36 @@ public class GlobalExceptionHandler {
                 "error", "NOT_FOUND",
                 "message", e.getMessage(),
                 "status", 404
+        ));
+    }
+
+    @ExceptionHandler(DuplicateKeyException.class)
+    public ResponseEntity<?> handleDuplicateKey(DuplicateKeyException e) {
+        log.warn("Duplicate key conflict: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                "error", "CONFLICT",
+                "message", "The resource already exists",
+                "status", 409
+        ));
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<?> handleMethodValidation(HandlerMethodValidationException e) {
+        log.warn("Request parameter validation failed: {}", e.getMessage());
+        return ResponseEntity.badRequest().body(Map.of(
+                "error", "BAD_REQUEST",
+                "message", "Invalid request parameters",
+                "status", 400
+        ));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<?> handleConstraintViolation(ConstraintViolationException e) {
+        log.warn("Request constraint validation failed: {}", e.getMessage());
+        return ResponseEntity.badRequest().body(Map.of(
+                "error", "BAD_REQUEST",
+                "message", "Invalid request parameters",
+                "status", 400
         ));
     }
 
