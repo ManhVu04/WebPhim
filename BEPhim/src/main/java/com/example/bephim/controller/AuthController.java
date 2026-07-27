@@ -8,6 +8,8 @@ import com.example.bephim.dto.ResetPasswordRequest;
 import com.example.bephim.model.User;
 import com.example.bephim.service.RefreshTokenDenylistService;
 import com.example.bephim.service.UserService;
+import com.example.bephim.service.RequestRateLimiter;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,6 +56,7 @@ public class AuthController {
     private final JwtEncoder jwtEncoder;
     private final JwtDecoder refreshTokenJwtDecoder;
     private final RefreshTokenDenylistService refreshTokenDenylistService;
+    private final RequestRateLimiter requestRateLimiter;
     private final String issuer;
     private final String publicUrl;
     private final boolean refreshCookieSecure;
@@ -65,6 +68,7 @@ public class AuthController {
             JwtEncoder jwtEncoder,
             @Qualifier("refreshTokenJwtDecoder") JwtDecoder refreshTokenJwtDecoder,
             RefreshTokenDenylistService refreshTokenDenylistService,
+            RequestRateLimiter requestRateLimiter,
             @Value("${app.auth.issuer}") String issuer,
             @Value("${app.public-url}") String publicUrl,
             @Value("${app.auth.refresh-cookie.secure:false}") boolean refreshCookieSecure,
@@ -74,6 +78,7 @@ public class AuthController {
         this.jwtEncoder = jwtEncoder;
         this.refreshTokenJwtDecoder = refreshTokenJwtDecoder;
         this.refreshTokenDenylistService = refreshTokenDenylistService;
+        this.requestRateLimiter = requestRateLimiter;
         this.issuer = issuer;
         this.publicUrl = publicUrl;
         this.refreshCookieSecure = refreshCookieSecure;
@@ -81,13 +86,19 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest body) {
+    public ResponseEntity<?> register(
+            @Valid @RequestBody RegisterRequest body,
+            HttpServletRequest request) {
+        requestRateLimiter.checkRegister(request);
         User user = userService.register(body.username(), body.email(), body.password(), body.displayName(), publicUrl);
         return tokenResponse(user, issueTokens(user));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest body) {
+    public ResponseEntity<?> login(
+            @Valid @RequestBody LoginRequest body,
+            HttpServletRequest request) {
+        requestRateLimiter.checkLogin(request, body.username());
         User user = userService.findByUsername(body.username().trim().toLowerCase());
         if (user == null || !passwordEncoder.matches(body.password(), user.getPassword())) {
             return ResponseEntity.status(401).body(apiError("UNAUTHORIZED", "Invalid username or password", 401));
@@ -108,7 +119,9 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(
-            @CookieValue(name = REFRESH_COOKIE, required = false) String refreshToken) {
+            @CookieValue(name = REFRESH_COOKIE, required = false) String refreshToken,
+            HttpServletRequest request) {
+        requestRateLimiter.checkRefresh(request);
         if (refreshToken == null || refreshToken.isBlank()) {
             return ResponseEntity.status(401).body(apiError("UNAUTHORIZED", "Refresh cookie is missing", 401));
         }
@@ -153,7 +166,10 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest body) {
+    public ResponseEntity<?> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest body,
+            HttpServletRequest request) {
+        requestRateLimiter.checkForgotPassword(request, body.email());
         userService.requestPasswordReset(body.email(), publicUrl);
         return ResponseEntity.ok(Map.of("message", "If that email exists, a reset link has been sent"));
     }
@@ -175,6 +191,7 @@ public class AuthController {
     @PostMapping("/email/verification/resend")
     public ResponseEntity<?> resendEmailVerification(@AuthenticationPrincipal Jwt jwt) {
         String userId = requireUserId(jwt);
+        requestRateLimiter.checkResendVerification(userId);
         userService.resendEmailVerification(userId, publicUrl);
         return ResponseEntity.ok(Map.of("message", "Verification email sent"));
     }

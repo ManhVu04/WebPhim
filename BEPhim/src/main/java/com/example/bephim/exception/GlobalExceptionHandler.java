@@ -3,6 +3,7 @@ package com.example.bephim.exception;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -58,6 +59,17 @@ public class GlobalExceptionHandler {
                 "message", e.getMessage(),
                 "status", 404
         ));
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<?> handleRateLimit(RateLimitExceededException e) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(e.getRetryAfterSeconds()))
+                .body(Map.of(
+                        "error", "RATE_LIMITED",
+                        "message", e.getMessage(),
+                        "status", 429
+                ));
     }
 
     @ExceptionHandler(Exception.class)
