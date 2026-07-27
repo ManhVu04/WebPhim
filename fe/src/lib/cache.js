@@ -1,13 +1,5 @@
-/**
- * Simple in-memory cache with TTL for API responses.
- * Provides stale-while-revalidate (SWR) pattern:
- *  - Return cached data immediately (even if stale)
- *  - Re-fetch in background if stale
- *  - Deduplicate in-flight requests
- */
-
-const DEFAULT_TTL = 5 * 60 * 1000 // 5 minutes — fresh
-const STALE_TTL = 30 * 60 * 1000  // 30 minutes — stale but usable
+const DEFAULT_TTL = 5 * 60 * 1000
+const STALE_TTL = 30 * 60 * 1000
 const MAX_ENTRIES = 200
 
 class ApiCache {
@@ -16,71 +8,66 @@ class ApiCache {
     this._inflight = new Map()
   }
 
-  /** Get cached entry. Returns { data, fresh } or null */
   get(key) {
     const entry = this._store.get(key)
     if (!entry) return null
-    const age = Date.now() - entry.ts
-    if (age > STALE_TTL) {
+    const now = Date.now()
+    if (now >= entry.staleAt) {
       this._store.delete(key)
       return null
     }
-    return { data: entry.data, fresh: age < DEFAULT_TTL }
+
+    // Refresh insertion order so eviction follows actual use, not first insert.
+    this._store.delete(key)
+    this._store.set(key, entry)
+    return { data: entry.data, fresh: now < entry.expiresAt }
   }
 
-  /** Store data */
-  set(key, data) {
-    // Evict oldest if too many entries
-    if (this._store.size >= MAX_ENTRIES) {
-      const oldest = this._store.keys().next().value
-      this._store.delete(oldest)
+  set(key, data, ttl = DEFAULT_TTL, staleTtl = Math.max(STALE_TTL, ttl)) {
+    this._store.delete(key)
+    while (this._store.size >= MAX_ENTRIES) {
+      this._store.delete(this._store.keys().next().value)
     }
-    this._store.set(key, { data, ts: Date.now() })
+    const now = Date.now()
+    this._store.set(key, {
+      data,
+      expiresAt: now + ttl,
+      staleAt: now + staleTtl,
+    })
   }
 
-  /**
-   * Fetch with SWR: returns cached data fast, revalidates in background.
-   * @param {string} key - Cache key
-   * @param {() => Promise<any>} fetcher - Function that returns a promise
-   * @param {(data: any) => void} onData - Called with data (may be called twice: cached + fresh)
-   * @param {(err: Error) => void} onError
-   * @returns {{ abort: () => void }}
-   */
-  swr(key, fetcher, onData, onError) {
+  getOrFetch(key, fetcher, ttl = DEFAULT_TTL) {
+    const cached = this.get(key)
+    if (cached?.fresh) return Promise.resolve(cached.data)
+    if (this._inflight.has(key)) return this._inflight.get(key)
+
+    const promise = Promise.resolve()
+      .then(fetcher)
+      .then((data) => {
+        this.set(key, data, ttl)
+        return data
+      })
+      .finally(() => {
+        this._inflight.delete(key)
+      })
+    this._inflight.set(key, promise)
+    return promise
+  }
+
+  swr(key, fetcher, onData, onError, ttl = DEFAULT_TTL) {
     let cancelled = false
     const cached = this.get(key)
-
     if (cached) {
-      // Return cached data immediately
       onData(cached.data)
-      if (cached.fresh) {
-        // Don't refetch if fresh
-        return { abort() {} }
-      }
+      if (cached.fresh) return { abort() {} }
     }
 
-    // Deduplicate in-flight requests
-    if (!this._inflight.has(key)) {
-      const promise = fetcher()
-        .then((data) => {
-          this.set(key, data)
-          this._inflight.delete(key)
-          return data
-        })
-        .catch((err) => {
-          this._inflight.delete(key)
-          throw err
-        })
-      this._inflight.set(key, promise)
-    }
-
-    this._inflight
-      .get(key)
+    this.getOrFetch(key, fetcher, ttl)
       .then((data) => {
         if (!cancelled) onData(data)
       })
-      .catch((err) => {
-        if (!cancelled && !cached) onError(err)
+      .catch((error) => {
+        if (!cancelled && !cached) onError(error)
       })
 
     return {
@@ -90,26 +77,10 @@ class ApiCache {
     }
   }
 
-  /** Prefetch a key without using the result */
-  prefetch(key, fetcher) {
-    const cached = this.get(key)
-    if (cached?.fresh) return // Already fresh
-
-    if (!this._inflight.has(key)) {
-      const promise = fetcher()
-        .then((data) => {
-          this.set(key, data)
-          this._inflight.delete(key)
-          return data
-        })
-        .catch(() => {
-          this._inflight.delete(key)
-        })
-      this._inflight.set(key, promise)
-    }
+  prefetch(key, fetcher, ttl = DEFAULT_TTL) {
+    return this.getOrFetch(key, fetcher, ttl).catch(() => undefined)
   }
 
-  /** Clear all */
   clear() {
     this._store.clear()
     this._inflight.clear()

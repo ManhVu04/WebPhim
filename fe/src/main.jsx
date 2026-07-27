@@ -4,13 +4,18 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
 
-// Register Service Worker for media caching
+// Remove the previous cache-first worker so API and media cannot stay stale.
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // SW registration failed, ignore
-    })
-  })
+  navigator.serviceWorker.getRegistrations()
+    .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+    .catch(() => {})
+}
+if ('caches' in window) {
+  caches.keys()
+    .then((keys) => Promise.all(
+      keys.filter((key) => key.startsWith('webphim-')).map((key) => caches.delete(key)),
+    ))
+    .catch(() => {})
 }
 
 createRoot(document.getElementById('root')).render(
