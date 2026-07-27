@@ -1,9 +1,9 @@
 pipeline {
     agent any
 
-    environment {
-        // Define any environment variables here
-        // For example, if you need to set JAVA_HOME or NODE_HOME
+    options {
+        timestamps()
+        disableConcurrentBuilds()
     }
 
     stages {
@@ -13,55 +13,81 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Start MongoDB') {
+            steps {
+                sh 'docker compose -f docker-compose.dev.yml up -d --wait mongo'
+            }
+        }
+
+        stage('Quality Gates') {
             parallel {
-                stage('Backend') {
+                stage('Backend Verify') {
                     steps {
                         dir('BEPhim') {
-                            // Verify backend is running on Java 21
-                            sh 'java -version 2>&1 | grep -Eq "version \"21(\\.|\\\")"'
-                            // Clean install and skip tests if you want to run them separately
-                            sh './mvnw clean install -DskipTests'
-                            // If you want to run tests, use: sh './mvnw clean test'
+                            sh '''java -version 2>&1 | grep -q 'version "21' '''
+                            sh './mvnw clean verify'
                         }
                     }
                 }
-                stage('Frontend') {
+
+                stage('Frontend Verify') {
                     steps {
                         dir('fe') {
-                            // Install npm dependencies
-                            sh 'npm install'
-                            // Build the frontend for production
+                            sh 'npm ci'
+                            sh 'npm run lint'
+                            sh 'npm test'
                             sh 'npm run build'
-                            // Optionally run lint or tests if available
-                            // sh 'npm run lint'
+                            sh 'npm run audit:ci'
                         }
                     }
                 }
             }
         }
 
-        stage('Test') {
-            // If you didn't run tests in the Build stage, run them here
-            // Example for backend tests:
-            // steps {
-            //     dir('BEPhim') {
-            //         sh 'mvn test'
-            //     }
-            // }
-            // Example for frontend tests (if you add a test script):
-            // steps {
-            //     dir('fe') {
-            //         sh 'npm test'
-            //     }
-            // }
+        stage('Backend Dependency Audit') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'oss-index-api',
+                        usernameVariable: 'OSS_INDEX_USERNAME',
+                        passwordVariable: 'OSS_INDEX_TOKEN'
+                    )
+                ]) {
+                    dir('BEPhim') {
+                        sh '''
+                            set -eu
+                            settings_file="$WORKSPACE/.ossindex-settings.xml"
+                            trap 'rm -f "$settings_file"' EXIT
+                            umask 077
+                            cat > "$settings_file" <<'SETTINGS'
+<settings>
+  <servers>
+    <server>
+      <id>ossindex</id>
+      <username>${env.OSS_INDEX_USERNAME}</username>
+      <password>${env.OSS_INDEX_TOKEN}</password>
+    </server>
+  </servers>
+</settings>
+SETTINGS
+                            ./mvnw --settings "$settings_file" \
+                                org.sonatype.ossindex.maven:ossindex-maven-plugin:3.1.0:audit \
+                                -Dossindex.authId=ossindex \
+                                -Dossindex.reportFile=target/ossindex-report.json
+                        '''
+                    }
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'BEPhim/target/ossindex-report.json', allowEmptyArchive: true
+                }
+            }
         }
 
         stage('Archive Artifacts') {
             steps {
-                // Archive the backend JAR
                 archiveArtifacts artifacts: 'BEPhim/target/*.jar', fingerprint: true
-                // Archive the frontend build directory
                 archiveArtifacts artifacts: 'fe/dist/**', fingerprint: true
             }
         }
@@ -69,14 +95,14 @@ pipeline {
 
     post {
         always {
-            // Clean up workspace if needed
+            sh 'docker compose -f docker-compose.dev.yml down --remove-orphans || true'
             cleanWs()
         }
         success {
-            echo 'Build succeeded!'
+            echo 'Build and security gates succeeded.'
         }
         failure {
-            echo 'Build failed!'
+            echo 'Build or security gate failed.'
         }
     }
 }

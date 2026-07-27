@@ -9,7 +9,7 @@ export function UserMenu() {
   const menuRef = useRef(null);
   const navigate = useNavigate();
 
-  useClickOutside(menuRef, () => setOpen(false), [open]);
+  useClickOutside(menuRef, () => setOpen(false));
 
   if (!user) {
     return (

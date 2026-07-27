@@ -17,6 +17,6 @@ public class RefreshTokenDenylistEntry {
 
     private Instant deniedAt;
 
-    @Indexed(expireAfterSeconds = 0)
+    @Indexed(expireAfter = "0s")
     private Instant expiresAt;
 }

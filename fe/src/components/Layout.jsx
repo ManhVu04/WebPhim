@@ -17,6 +17,29 @@ export function Layout() {
   const [countries, setCountries] = useState([])
   const [years, setYears] = useState([])
 
+  const ensureCats = useCallback(async () => {
+    if (cats.length) return
+    const json = await ophimApi.categories()
+    setCats(json?.data?.items || json?.data || [])
+  }, [cats.length])
+
+  const ensureCountries = useCallback(async () => {
+    if (countries.length) return
+    const json = await ophimApi.countries()
+    setCountries(json?.data?.items || json?.data || [])
+  }, [countries.length])
+
+  const ensureYears = useCallback(async () => {
+    if (years.length) return
+    const json = await ophimApi.years()
+    const items = json?.data?.items || json?.data || []
+    const nextYears = items
+      .map((it) => (typeof it === 'number' ? it : Number(it?.year ?? it?.name ?? it)))
+      .filter((year) => Number.isFinite(year))
+      .sort((left, right) => right - left)
+    setYears(nextYears)
+  }, [years.length])
+
   // Close mobile menu on resize to desktop
   useEffect(() => {
     const handleResize = () => {
@@ -35,7 +58,7 @@ export function Layout() {
       ensureCountries()
       ensureYears()
     }
-  }, [mobileMenuOpen])
+  }, [mobileMenuOpen, ensureCats, ensureCountries, ensureYears])
 
   // Prevent body scroll when overlays open
   useEffect(() => {
@@ -57,29 +80,6 @@ export function Layout() {
     ],
     [],
   )
-
-  async function ensureCats() {
-    if (cats.length) return
-    const json = await ophimApi.categories()
-    setCats(json?.data?.items || json?.data || [])
-  }
-
-  async function ensureCountries() {
-    if (countries.length) return
-    const json = await ophimApi.countries()
-    setCountries(json?.data?.items || json?.data || [])
-  }
-
-  async function ensureYears() {
-    if (years.length) return
-    const json = await ophimApi.years()
-    const items = json?.data?.items || json?.data || []
-    const ys = items
-      .map((it) => (typeof it === 'number' ? it : Number(it?.year ?? it?.name ?? it)))
-      .filter((y) => Number.isFinite(y))
-      .sort((x, y) => y - x)
-    setYears(ys)
-  }
 
   function onSubmit(e) {
     e.preventDefault()

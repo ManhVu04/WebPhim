@@ -26,7 +26,7 @@ function matchesAllowedHost(hostname, allowedHost) {
   return hostname === normalized || hostname.endsWith(`.${normalized}`)
 }
 
-function isAllowedPlayerUrl(url) {
+export function isAllowedPlayerUrl(url) {
   if (!url) return false
 
   try {
@@ -109,21 +109,32 @@ function HlsVideo({ src }) {
     const video = videoRef.current
     if (!video || !src) return
     setError(null)
-    setLoadStatus('idle')
+    setLoadStatus('loading')
 
     if (isNativeSupported) {
+      const handleLoaded = () => setLoadStatus('loaded')
+      const handleError = () => {
+        setError('Không phát được link m3u8. Hãy thử Embed hoặc server khác.')
+        setLoadStatus('error')
+      }
+      video.addEventListener('loadedmetadata', handleLoaded)
+      video.addEventListener('error', handleError)
       video.src = src
-      setLoadStatus('loaded')
-      return
+      video.load()
+      return () => {
+        video.removeEventListener('loadedmetadata', handleLoaded)
+        video.removeEventListener('error', handleError)
+        video.removeAttribute('src')
+        video.load()
+      }
     }
 
     let destroyed = false
     let hls = null
 
     ;(async () => {
-      setLoadStatus('loading')
       try {
-        const mod = await import(/* @vite-ignore */ 'hls.js')
+        const mod = await import('hls.js')
         const Hls = mod.default
 
         if (destroyed) return
@@ -142,16 +153,19 @@ function HlsVideo({ src }) {
         hls.on(Hls.Events.MEDIA_ATTACHED, () => {
           hls.loadSource(src)
         })
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          if (!destroyed) setLoadStatus('loaded')
+        })
         hls.on(Hls.Events.ERROR, (_e, data) => {
-          if (data?.fatal) {
+          if (!destroyed && data?.fatal) {
             setError('Không phát được link m3u8. Hãy thử Embed hoặc server khác.')
             hls.destroy()
             hls = null
             setLoadStatus('error')
           }
         })
-        setLoadStatus('loaded')
       } catch (e) {
+        if (destroyed) return
         // Handle chunk load error (network, cache, etc.)
         const msg = String(e?.message || e || '')
         if (msg.includes('Failed to fetch') || msg.includes('Loading chunk')) {
@@ -168,21 +182,26 @@ function HlsVideo({ src }) {
     return () => {
       destroyed = true
       if (hls) hls.destroy()
+      video.removeAttribute('src')
+      video.load()
     }
   }, [src, isNativeSupported])
 
   return (
     <>
       {error ? <div className="muted" style={{ marginBottom: 10 }}>{error}</div> : null}
-      <div className="player">
+      <div className="player" style={{ position: 'relative' }}>
+        <video ref={videoRef} controls playsInline preload="metadata" />
         {loadStatus === 'loading' ? (
           <div style={{
+            position: 'absolute',
+            inset: 0,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            height: '100%',
             color: 'var(--text-muted)',
-            gap: 8
+            gap: 8,
+            pointerEvents: 'none',
           }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
               <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
@@ -190,9 +209,7 @@ function HlsVideo({ src }) {
             </svg>
             Đang tải bộ phát...
           </div>
-        ) : (
-          <video ref={videoRef} controls playsInline />
-        )}
+        ) : null}
       </div>
     </>
   )

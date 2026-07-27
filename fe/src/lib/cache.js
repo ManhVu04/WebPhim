@@ -54,29 +54,6 @@ class ApiCache {
     return promise
   }
 
-  swr(key, fetcher, onData, onError, ttl = DEFAULT_TTL) {
-    let cancelled = false
-    const cached = this.get(key)
-    if (cached) {
-      onData(cached.data)
-      if (cached.fresh) return { abort() {} }
-    }
-
-    this.getOrFetch(key, fetcher, ttl)
-      .then((data) => {
-        if (!cancelled) onData(data)
-      })
-      .catch((error) => {
-        if (!cancelled && !cached) onError(error)
-      })
-
-    return {
-      abort() {
-        cancelled = true
-      },
-    }
-  }
-
   prefetch(key, fetcher, ttl = DEFAULT_TTL) {
     return this.getOrFetch(key, fetcher, ttl).catch(() => undefined)
   }

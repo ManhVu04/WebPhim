@@ -5,6 +5,8 @@ node_modules/
 .DS_Store
 .claude/worktrees/
 .local-jdk/
+*.iml
+BEPhim/deps/
 node_modules/
 .env
 *.log
