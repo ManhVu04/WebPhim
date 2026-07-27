@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:ssr": "vite build --ssr src/entry-server.jsx --outDir dist/server --emptyOutDir false",
+    "prerender": "node scripts/prerender.mjs",
+    "build:prerender": "npm run build && npm run build:ssr && npm run prerender",
     "lint": "eslint .",
     "test": "vitest run",
     "audit:ci": "node scripts/check-audit.mjs",

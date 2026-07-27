@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { MovieCard } from '../components/MovieCard.jsx'
 import { ErrorState, Loading } from '../components/State.jsx'
-import { ophimApi } from '../lib/api.js'
+import { cacheKeys, ophimApi } from '../lib/api.js'
 import { buildPosterUrl } from '../lib/image.js'
+import { usePrerenderData } from '../lib/prerenderData.jsx'
 import { htmlToText } from '../lib/text.js'
 
-const HOME_SECTIONS = [
+export const HOME_SECTIONS = [
   { key: 'phim-moi', title: 'Phim mới cập nhật', to: '/danh-sach/phim-moi?page=1' },
   { key: 'phim-chieu-rap', title: 'Phim chiếu rạp', to: '/danh-sach/phim-chieu-rap?page=1' },
   { key: 'phim-bo', title: 'Phim bộ mới', to: '/danh-sach/phim-bo?page=1' },
@@ -28,13 +29,26 @@ function pickHeroItem(home, fallbackSections) {
   return fallbackSections.find((section) => section.items.length)?.items[0] || null
 }
 
+function initialSectionsFrom(data) {
+  return HOME_SECTIONS.map((section) => {
+    const json = data[cacheKeys.list(section.key, 1)]
+    const normalized = normalizeList(json)
+    return { ...section, ...normalized }
+  }).filter((section) => section.items.length)
+}
+
 export function HomePage() {
-  const [home, setHome] = useState(null)
-  const [sections, setSections] = useState([])
+  const prerenderData = usePrerenderData()
+  const initialHome = prerenderData[cacheKeys.home()] || null
+  const initialSections = initialSectionsFrom(prerenderData)
+  const hasInitialData = Boolean(initialHome || initialSections.length)
+  const [home, setHome] = useState(initialHome)
+  const [sections, setSections] = useState(initialSections)
   const [err, setErr] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!hasInitialData)
 
   useEffect(() => {
+    if (hasInitialData) return
     let alive = true
     setLoading(true)
 
@@ -59,7 +73,7 @@ export function HomePage() {
     return () => {
       alive = false
     }
-  }, [])
+  }, [hasInitialData])
 
   const hero = useMemo(() => pickHeroItem(home, sections), [home, sections])
   const cdn = sections[0]?.cdn || normalizeList(home).cdn || ''

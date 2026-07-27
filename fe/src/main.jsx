@@ -1,8 +1,9 @@
 import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
+import { createRoot, hydrateRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
+import { PrerenderDataProvider } from './lib/prerenderData.jsx'
 
 // Remove the previous cache-first worker so API and media cannot stay stale.
 if ('serviceWorker' in navigator) {
@@ -18,10 +19,19 @@ if ('caches' in window) {
     .catch(() => {})
 }
 
-createRoot(document.getElementById('root')).render(
+const root = document.getElementById('root')
+const app = (
   <StrictMode>
     <BrowserRouter>
-      <App />
+      <PrerenderDataProvider initialData={window.__WEBPHIM_PRERENDER_DATA__ || {}}>
+        <App />
+      </PrerenderDataProvider>
     </BrowserRouter>
-  </StrictMode>,
+  </StrictMode>
 )
+
+if (root.hasChildNodes()) {
+  hydrateRoot(root, app)
+} else {
+  createRoot(root).render(app)
+}

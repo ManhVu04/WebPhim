@@ -22,6 +22,8 @@ import { HistoryPage } from './pages/user/HistoryPage.jsx'
 import { AccountSecurityPage } from './pages/user/AccountSecurityPage.jsx'
 import { ListByYearPage } from './pages/ListByYearPage.jsx'
 import { HomePage } from './pages/HomePage.jsx'
+import { ListPage } from './pages/ListPage.jsx'
+import { MovieDetailPage } from './pages/MovieDetailPage.jsx'
 
 const THEME_KEY = 'webphim_theme'
 
@@ -40,9 +42,7 @@ function applyTheme(theme) {
   document.documentElement.dataset.theme = theme
 }
 
-const MovieDetailPage = lazy(() => import('./pages/MovieDetailPage.jsx').then((m) => ({ default: m.MovieDetailPage })))
 const WatchPage = lazy(() => import('./pages/WatchPage.jsx').then((m) => ({ default: m.WatchPage })))
-const ListPage = lazy(() => import('./pages/ListPage.jsx').then((m) => ({ default: m.ListPage })))
 
 function App() {
   const [theme, setTheme] = useState(getInitialTheme)

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ophimApi } from '../lib/api.js'
+import { cacheKeys, ophimApi } from '../lib/api.js'
 import { buildPosterUrl, buildThumbUrl } from '../lib/image.js'
 import { htmlToText } from '../lib/text.js'
 import { ErrorState, Loading } from '../components/State.jsx'
@@ -8,6 +8,7 @@ import { LazyImage } from '../components/LazyImage.jsx'
 import { useAuth } from '../lib/auth.jsx'
 import { authFetch } from '../lib/authApi.js'
 import { MovieCard } from '../components/MovieCard.jsx'
+import { usePrerenderData } from '../lib/prerenderData.jsx'
 
 function joinNames(arr) {
   if (!Array.isArray(arr)) return ''
@@ -20,11 +21,15 @@ function joinNames(arr) {
 
 export function MovieDetailPage() {
   const { slug } = useParams()
-  const [movie, setMovie] = useState(null)
+  const prerenderData = usePrerenderData()
+  const initialMovie = prerenderData[cacheKeys.movie(slug)]
+  const initialPeople = prerenderData[cacheKeys.moviePeople(slug)] || null
+  const initialRecommendations = prerenderData[cacheKeys.list('phim-moi', 1)] || null
+  const [movie, setMovie] = useState(initialMovie || null)
   const [err, setErr] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [people, setPeople] = useState(null)
-  const [recommendations, setRecommendations] = useState(null)
+  const [loading, setLoading] = useState(!initialMovie)
+  const [people, setPeople] = useState(initialPeople)
+  const [recommendations, setRecommendations] = useState(initialRecommendations)
   const { user } = useAuth()
   const [isFavorite, setIsFavorite] = useState(false)
   const [favLoading, setFavLoading] = useState(false)
@@ -90,13 +95,25 @@ export function MovieDetailPage() {
 
   useEffect(() => {
     let alive = true
-    setLoading(true)
-    Promise.allSettled([ophimApi.movie(slug), ophimApi.moviePeople(slug), ophimApi.list('phim-moi', 1)]).then(
+    setMovie(initialMovie || null)
+    setPeople(initialPeople)
+    setRecommendations(initialRecommendations)
+    setErr(null)
+    setLoading(!initialMovie)
+
+    const movieRequest = initialMovie ? Promise.resolve(initialMovie) : ophimApi.movie(slug)
+    const peopleRequest = initialPeople ? Promise.resolve(initialPeople) : ophimApi.moviePeople(slug)
+    const recommendationsRequest = initialRecommendations
+      ? Promise.resolve(initialRecommendations)
+      : ophimApi.list('phim-moi', 1)
+
+    Promise.allSettled([movieRequest, peopleRequest, recommendationsRequest]).then(
       (results) => {
         if (!alive) return
         const [rMovie, rPeople, rRecommendations] = results
         if (rMovie.status === 'rejected') {
           setErr(rMovie.reason)
+          setMovie(null)
         } else {
           setMovie(rMovie.value)
         }
@@ -108,7 +125,7 @@ export function MovieDetailPage() {
     return () => {
       alive = false
     }
-  }, [slug])
+  }, [slug, initialMovie, initialPeople, initialRecommendations])
 
   const cdn = movie?.data?.APP_DOMAIN_CDN_IMAGE || movie?.data?.APP_DOMAIN_CDN || ''
   const item = movie?.data?.item || movie?.data?.data?.item || movie?.data || null

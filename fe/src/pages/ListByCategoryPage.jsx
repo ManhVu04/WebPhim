@@ -1,19 +1,28 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
-import { ophimApi } from '../lib/api.js'
+import { cacheKeys, ophimApi } from '../lib/api.js'
 import { MovieGrid } from '../components/MovieGrid.jsx'
 import { ErrorState, Loading } from '../components/State.jsx'
 import { Pagination } from '../components/Pagination.jsx'
+import { usePrerenderData } from '../lib/prerenderData.jsx'
 
 export function ListByCategoryPage() {
   const { slug } = useParams()
   const [params] = useSearchParams()
   const page = Math.max(1, Number(params.get('page') || 1))
-  const [data, setData] = useState(null)
+  const prerenderData = usePrerenderData()
+  const initialData = prerenderData[cacheKeys.category(slug, page)]
+  const [data, setData] = useState(initialData || null)
   const [err, setErr] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!initialData)
 
   useEffect(() => {
+    if (initialData) {
+      setData(initialData)
+      setErr(null)
+      setLoading(false)
+      return
+    }
     let alive = true
     setLoading(true)
     ophimApi
@@ -28,7 +37,7 @@ export function ListByCategoryPage() {
     return () => {
       alive = false
     }
-  }, [slug, page])
+  }, [slug, page, initialData])
 
   if (loading) return <Loading label="Đang tải phim theo thể loại..." />
   if (err) return <ErrorState error={err} />
@@ -49,4 +58,3 @@ export function ListByCategoryPage() {
     </>
   )
 }
-

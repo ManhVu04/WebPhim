@@ -93,7 +93,7 @@ export const LazyImage = memo(function LazyImage({
           src={src}
           alt={alt || ''}
           decoding="async"
-          fetchpriority={priority ? 'high' : 'low'}
+          fetchPriority={priority ? 'high' : 'low'}
           onLoad={handleLoad}
           onError={handleError}
         />
