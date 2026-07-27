@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ophimApi } from '../lib/api.js'
 import { buildThumbUrl } from '../lib/image.js'
+import { useClickOutside } from '../lib/useClickOutside.js'
 
 // ─── In-memory LRU cache for search results ───
 const CACHE_MAX = 30
@@ -92,16 +93,7 @@ export function SearchOverlay({ query, onClose, containerRef }) {
   }, [query])
 
   // Close on click outside
-  useEffect(() => {
-    function handleClick(e) {
-      const container = containerRef?.current || overlayRef.current
-      if (container && !container.contains(e.target)) {
-        onClose()
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [onClose])
+  useClickOutside(() => containerRef?.current || overlayRef.current, onClose)
 
   // Close on Escape
   useEffect(() => {

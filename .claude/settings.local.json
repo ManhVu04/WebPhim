@@ -73,7 +73,8 @@
       "Bash(.\\\\mvnw.cmd -version)",
       "Bash(./mvnw.cmd spring-boot:run)",
       "mcp__gitnexus__detect_changes",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(./BEPhim/mvnw *)"
     ]
   },
   "prefersReducedMotion": true

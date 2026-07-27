@@ -22,8 +22,8 @@ import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtClaimValidator;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -154,21 +154,22 @@ public class AuthorizationServerConfig {
     public JwtDecoder refreshTokenJwtDecoder(
             JWKSource<SecurityContext> jwkSource,
             @Value("${app.auth.issuer}") String issuer) {
-        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSource(jwkSource).build();
-        decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(issuer));
-        return decoder;
+        return createJwtDecoder(jwkSource, issuer, "refresh");
     }
 
     @Bean
     public JwtDecoder resourceServerJwtDecoder(
             JWKSource<SecurityContext> jwkSource,
             @Value("${app.auth.issuer}") String issuer) {
+        return createJwtDecoder(jwkSource, issuer, "access");
+    }
+
+    private static JwtDecoder createJwtDecoder(JWKSource<SecurityContext> jwkSource, String issuer, String tokenType) {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSource(jwkSource).build();
-        OAuth2TokenValidator<Jwt> validator = new DelegatingOAuth2TokenValidator<>(
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
                 JwtValidators.createDefaultWithIssuer(issuer),
-                new JwtClaimValidator<>("tokenType", "access"::equals)
-        );
-        decoder.setJwtValidator(validator);
+                new JwtClaimValidator<>("tokenType", tokenType::equals)
+        ));
         return decoder;
     }
 

@@ -193,7 +193,6 @@
   display: block;
   width: 100%;
   min-height: 40px;
-  padding: 10px 11px;
   border: 0;
   border-radius: 6px;
   background: transparent;
@@ -209,19 +208,28 @@
 .user-panel-head {
   min-height: 54px;
   margin-bottom: 6px;
-  border-bottom: 1px solid var(--border) !important;
+  border-bottom: 1px solid var(--border);
   cursor: default;
 }
 
-.user-panel .user-panel-danger {
+.user-panel-danger {
   margin-top: 6px;
   border-top: 1px solid var(--border);
   color: #fca5a5;
 }
 
-.user-panel .user-panel-danger:hover {
+.user-panel-danger:hover {
   background: rgba(239, 68, 68, 0.11);
   color: #fecaca;
+}
+
+.user-panel-name {
+  font-weight: 600;
+}
+
+.user-panel-username {
+  font-size: 12px;
+  color: var(--muted);
 }
 
 .search-wrapper {

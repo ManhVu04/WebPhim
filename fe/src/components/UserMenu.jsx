@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth.jsx';
+import { useClickOutside } from '../lib/useClickOutside.js';
 
 export function UserMenu() {
   const { user, logout } = useAuth();
@@ -8,16 +9,7 @@ export function UserMenu() {
   const menuRef = useRef(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!open) return;
-    function handlePointerDown(event) {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handlePointerDown);
-    return () => document.removeEventListener('mousedown', handlePointerDown);
-  }, [open]);
+  useClickOutside(menuRef, () => setOpen(false), [open]);
 
   if (!user) {
     return (
@@ -52,8 +44,8 @@ export function UserMenu() {
       {open && (
         <div className="dropdownPanel user-panel" role="menu">
           <div className="dropdownItem user-panel-head" role="presentation">
-            <div style={{ fontWeight: 600 }}>{user.displayName || user.username}</div>
-            <div style={{ fontSize: '12px', color: 'var(--muted)' }}>@{user.username}</div>
+            <div className="user-panel-name">{user.displayName || user.username}</div>
+            <div className="user-panel-username">@{user.username}</div>
           </div>
           <Link 
             to="/lich-su" 

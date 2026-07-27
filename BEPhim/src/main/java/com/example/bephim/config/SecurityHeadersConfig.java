@@ -15,21 +15,7 @@ public final class SecurityHeadersConfig {
     private static final Pattern FRAME_HOST_SPLIT = Pattern.compile("[,\\s]+");
 
     private static final List<String> DEFAULT_FRAME_HOSTS = List.of(
-            "'self'",
-            "https://ophim.live",
-            "https://*.ophim.live",
-            "https://ophim.cc",
-            "https://*.ophim.cc",
-            "https://ophim17.cc",
-            "https://*.ophim17.cc",
-            "https://phimapi.com",
-            "https://*.phimapi.com",
-            "https://phim1280.tv",
-            "https://*.phim1280.tv",
-            "https://kkphim.vip",
-            "https://*.kkphim.vip",
-            "https://kkphim.cc",
-            "https://*.kkphim.cc"
+            "'self'"
     );
 
     private static final String CONTENT_SECURITY_POLICY = String.join("; ",
@@ -64,10 +50,12 @@ public final class SecurityHeadersConfig {
 
     static void applySecurityHeaders(HeadersConfigurer<HttpSecurity> headers, String allowedFrameHosts) {
         List<String> frameHosts = buildFrameSrc(allowedFrameHosts);
+        // frame-src: allow embeds from any https source + configured hosts
+        // frame-ancestors: 'self' only — prevent clickjacking by 3rd-party sites
         String policy = String.join("; ",
                 CONTENT_SECURITY_POLICY,
-                "frame-src " + String.join(" ", frameHosts),
-                "frame-ancestors " + String.join(" ", frameHosts));
+                "frame-src https: " + String.join(" ", frameHosts),
+                "frame-ancestors 'self'");
 
         headers
                 .contentSecurityPolicy(csp -> csp.policyDirectives(policy))

@@ -5,6 +5,10 @@
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/api\/ophim$/, '') || '';
 
+function errorMessage(data, fallback) {
+  return data.message || data.error || fallback;
+}
+
 async function parseApiResponse(res) {
   const text = await res.text();
   if (!text) return {};
@@ -22,7 +26,7 @@ export async function apiLogin(username, password) {
     body: JSON.stringify({ username, password }),
   });
   const data = await parseApiResponse(res);
-  if (!res.ok) throw new Error(data.error || data.message || 'Login failed');
+  if (!res.ok) throw new Error(errorMessage(data, 'Login failed'));
   return data; // { accessToken, refreshToken, expiresIn, id, username, displayName }
 }
 
@@ -33,7 +37,7 @@ export async function apiRegister(username, email, password, displayName) {
     body: JSON.stringify({ username, email, password, displayName }),
   });
   const data = await parseApiResponse(res);
-  if (!res.ok) throw new Error(data.error || data.message || 'Registration failed');
+  if (!res.ok) throw new Error(errorMessage(data, 'Registration failed'));
   return data; // same shape as login
 }
 
@@ -52,7 +56,7 @@ export async function apiRefreshToken(refreshToken) {
     body: JSON.stringify({ refreshToken }),
   });
   const data = await parseApiResponse(res);
-  if (!res.ok) throw new Error(data.error || data.message || 'Token refresh failed');
+  if (!res.ok) throw new Error(errorMessage(data, 'Token refresh failed'));
   return data; // { accessToken, refreshToken, expiresIn, id, username, displayName }
 }
 
@@ -62,7 +66,7 @@ export async function apiChangePassword(accessToken, currentPassword, newPasswor
     body: JSON.stringify({ currentPassword, newPassword }),
   });
   if (data?._unauthorized) throw new Error('Session expired');
-  if (data?._error) throw new Error(data.error || data.message || 'Password change failed');
+  if (data?._error) throw new Error(errorMessage(data, 'Password change failed'));
   return data;
 }
 
@@ -71,7 +75,7 @@ export async function apiRevokeAllSessions(accessToken) {
     method: 'POST',
   });
   if (data?._unauthorized) throw new Error('Session expired');
-  if (data?._error) throw new Error(data.error || data.message || 'Session revoke failed');
+  if (data?._error) throw new Error(errorMessage(data, 'Session revoke failed'));
   return data;
 }
 
@@ -82,7 +86,7 @@ export async function apiForgotPassword(email) {
     body: JSON.stringify({ email }),
   });
   const data = await parseApiResponse(res);
-  if (!res.ok) throw new Error(data.error || data.message || 'Password reset request failed');
+  if (!res.ok) throw new Error(errorMessage(data, 'Password reset request failed'));
   return data;
 }
 
@@ -93,14 +97,14 @@ export async function apiResetPassword(token, newPassword) {
     body: JSON.stringify({ token, newPassword }),
   });
   const data = await parseApiResponse(res);
-  if (!res.ok) throw new Error(data.error || data.message || 'Password reset failed');
+  if (!res.ok) throw new Error(errorMessage(data, 'Password reset failed'));
   return data;
 }
 
 export async function apiVerifyEmail(token) {
   const res = await fetch(`${API_BASE}/api/auth/verify-email?token=${encodeURIComponent(token)}`);
   const data = await parseApiResponse(res);
-  if (!res.ok) throw new Error(data.error || data.message || 'Email verification failed');
+  if (!res.ok) throw new Error(errorMessage(data, 'Email verification failed'));
   return data;
 }
 
@@ -109,7 +113,7 @@ export async function apiResendEmailVerification(accessToken) {
     method: 'POST',
   });
   if (data?._unauthorized) throw new Error('Session expired');
-  if (data?._error) throw new Error(data.error || data.message || 'Verification email resend failed');
+  if (data?._error) throw new Error(errorMessage(data, 'Verification email resend failed'));
   return data;
 }
 
@@ -160,6 +164,6 @@ export async function authFetch(path, accessToken, options = {}) {
   if (res.status === 401) return { _unauthorized: true };
   const data = await parseApiResponse(res);
   if (!Object.keys(data).length) return res.ok ? {} : { _error: true, status: res.status };
-  if (!res.ok) throw new Error(data.error || data.message || `HTTP ${res.status}`);
+  if (!res.ok) throw new Error(errorMessage(data, `HTTP ${res.status}`));
   return data;
 }
