@@ -5,6 +5,19 @@ export const DEFAULT_SEO = {
   description: 'WebPhim - Xem phim online miễn phí, cập nhật phim mới nhanh nhất với chất lượng HD, Vietsub.',
 }
 
+const NOINDEX_PATHS = new Set([
+  '/dang-nhap', '/dang-ky', '/quen-mat-khau', '/dat-lai-mat-khau', '/xac-minh-email',
+  '/yeu-thich', '/lich-su',
+  '/tim-kiem',
+])
+
+export function isNoindex(path) {
+  if (NOINDEX_PATHS.has(path)) return true
+  if (path.startsWith('/tai-khoan/')) return true
+  if (path.startsWith('/xem/')) return true
+  return false
+}
+
 function stripHtml(value) {
   return String(value || '')
     .replace(/<[^>]*>/g, ' ')
@@ -14,10 +27,10 @@ function stripHtml(value) {
 
 function truncate(value, max = 160) {
   const text = stripHtml(value)
-  return text.length > max ? `${text.slice(0, max - 1).trim()}...` : text
+  return text.length > max ? text.slice(0, max - 1).trim() + '...' : text
 }
 
-function escapeHtml(value) {
+export function escapeHtml(value) {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -50,16 +63,61 @@ function absoluteUrl(siteUrl, value) {
   }
 }
 
+function prevNextUrl(url, siteUrl, page, totalPages) {
+  if (!totalPages || totalPages <= 1) return { prev: null, next: null }
+  const base = String(siteUrl).replace(/\/$/, '')
+  const makeUrl = (p) => {
+    const parsed = new URL(url, base)
+    if (p <= 1) parsed.searchParams.delete('page')
+    else parsed.searchParams.set('page', String(p))
+    parsed.hash = ''
+    return parsed.toString()
+  }
+  return {
+    prev: page > 1 ? makeUrl(page - 1) : null,
+    next: page < totalPages ? makeUrl(page + 1) : null,
+  }
+}
+
+function getPagination(data) {
+  const pagination = data?.data?.params?.pagination
+  if (!pagination?.pageCount) return null
+  return {
+    currentPage: Math.max(1, Number(pagination.currentPage || 1)),
+    totalPages: Number(pagination.pageCount),
+  }
+}
+
+function getBreadcrumb(item, siteUrl) {
+  if (!item?.name) return undefined
+  const base = String(siteUrl).replace(/\/$/, '')
+  const elements = [
+    { '@type': 'ListItem', position: 1, name: 'Trang ch\u1ee7', item: base + '/' },
+  ]
+  const cat = Array.isArray(item.category) ? item.category[0] : null
+  if (cat?.name && cat?.slug && item.slug) {
+    elements.push({
+      '@type': 'ListItem', position: 2, name: cat.name, item: base + '/the-loai/' + cat.slug,
+    })
+    elements.push({
+      '@type': 'ListItem', position: 3, name: item.name, item: base + '/phim/' + item.slug,
+    })
+  } else if (item.slug && item.name) {
+    elements.push({
+      '@type': 'ListItem', position: 2, name: item.name, item: base + '/phim/' + item.slug,
+    })
+  }
+  return { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: elements }
+}
+
 export function selectPrerenderData(url = '/', data = {}) {
   const parsed = new URL(url, 'http://localhost')
   const path = parsed.pathname.replace(/\/$/, '') || '/'
   const page = Math.max(1, Number(parsed.searchParams.get('page') || 1))
   const selected = {}
-
   const include = (key) => {
     if (Object.prototype.hasOwnProperty.call(data, key)) selected[key] = data[key]
   }
-
   if (path === '/') {
     include('home')
     for (const key of Object.keys(data)) {
@@ -67,27 +125,31 @@ export function selectPrerenderData(url = '/', data = {}) {
     }
     return selected
   }
-
   const movieMatch = path.match(/^\/phim\/([^/]+)$/)
   if (movieMatch) {
     const slug = decodeURIComponent(movieMatch[1])
-    include(`movie:${slug}`)
-    include(`movie-people:${slug}`)
+    include('movie:' + slug)
+    include('movie-people:' + slug)
     include('list:phim-moi:1')
     return selected
   }
-
   const listMatch = path.match(/^\/danh-sach\/([^/]+)$/)
   if (listMatch) {
-    include(`list:${decodeURIComponent(listMatch[1])}:${page}`)
+    include('list:' + decodeURIComponent(listMatch[1]) + ':' + page)
     return selected
   }
-
   const categoryMatch = path.match(/^\/the-loai\/([^/]+)$/)
   if (categoryMatch) {
-    include(`cat:${decodeURIComponent(categoryMatch[1])}:${page}`)
+    include('cat:' + decodeURIComponent(categoryMatch[1]) + ':' + page)
   }
-
+  const countryMatch = path.match(/^\/quoc-gia\/([^/]+)$/)
+  if (countryMatch) {
+    include('country:' + decodeURIComponent(countryMatch[1]) + ':' + page)
+  }
+  const yearMatch = path.match(/^\/nam-phat-hanh\/(\d+)$/)
+  if (yearMatch) {
+    include('year:' + yearMatch[1] + ':' + page)
+  }
   return selected
 }
 
@@ -127,10 +189,9 @@ function movieSeo(data, peopleData, siteUrl) {
         bestRating: 10,
       }
     : undefined
-
   return {
-    title: `${title} - Xem phim Vietsub HD | WebPhim`,
-    description: truncate(item?.content || `${title} Vietsub HD, xem phim online tại WebPhim.`),
+    title: title + ' - Xem phim Vietsub HD | WebPhim',
+    description: truncate(item?.content || title + ' Vietsub HD, xem phim online t\u1ea1i WebPhim.'),
     type: 'video.movie',
     image,
     jsonLd: {
@@ -145,6 +206,7 @@ function movieSeo(data, peopleData, siteUrl) {
       director: directors.length ? directors : undefined,
       aggregateRating: rating,
     },
+    breadcrumb: getBreadcrumb(item, siteUrl),
   }
 }
 
@@ -153,23 +215,38 @@ export function buildSeo({ url = '/', data = {}, siteUrl = 'http://localhost:517
   const path = parsed.pathname.replace(/\/$/, '') || '/'
   const page = getPage(url, siteUrl)
   let seo = { ...DEFAULT_SEO, type: 'website', image: '' }
-
+  let pagination = null
   if (path === '/') {
-    seo = listSeo(data.home, siteUrl)
+    seo = listSeo(data.home)
   } else {
     const movieMatch = path.match(/^\/phim\/([^/]+)$/)
     const listMatch = path.match(/^\/danh-sach\/([^/]+)$/)
     const categoryMatch = path.match(/^\/the-loai\/([^/]+)$/)
+    const countryMatch = path.match(/^\/quoc-gia\/([^/]+)$/)
+    const yearMatch = path.match(/^\/nam-phat-hanh\/(\d+)$/)
     if (movieMatch) {
       const slug = decodeURIComponent(movieMatch[1])
-      seo = movieSeo(data[`movie:${slug}`], data[`movie-people:${slug}`], siteUrl)
+      const movieData = data['movie:' + slug]
+      seo = movieSeo(movieData, data['movie-people:' + slug], siteUrl)
     } else if (listMatch) {
-      seo = listSeo(data[`list:${decodeURIComponent(listMatch[1])}:${page}`], siteUrl)
+      const listData = data['list:' + decodeURIComponent(listMatch[1]) + ':' + page]
+      seo = listSeo(listData)
+      pagination = getPagination(listData)
     } else if (categoryMatch) {
-      seo = listSeo(data[`cat:${decodeURIComponent(categoryMatch[1])}:${page}`], siteUrl)
+      const catData = data['cat:' + decodeURIComponent(categoryMatch[1]) + ':' + page]
+      seo = listSeo(catData)
+      pagination = getPagination(catData)
+    } else if (countryMatch) {
+      const countryData = data['country:' + decodeURIComponent(countryMatch[1]) + ':' + page]
+      seo = listSeo(countryData)
+      pagination = getPagination(countryData)
+    } else if (yearMatch) {
+      const yearData = data['year:' + yearMatch[1] + ':' + page]
+      seo = listSeo(yearData)
+      pagination = getPagination(yearData)
     }
   }
-
+  const pn = prevNextUrl(url, siteUrl, page, pagination?.totalPages ?? 0)
   return {
     title: seo.title || DEFAULT_SEO.title,
     description: seo.description || DEFAULT_SEO.description,
@@ -177,29 +254,38 @@ export function buildSeo({ url = '/', data = {}, siteUrl = 'http://localhost:517
     type: seo.type || 'website',
     image: absoluteUrl(siteUrl, seo.image),
     jsonLd: seo.jsonLd,
+    breadcrumb: seo.breadcrumb,
+    prev: pn.prev,
+    next: pn.next,
+    path,
   }
 }
 
 export function buildHeadTags(args) {
   const seo = buildSeo(args)
+  const noindex = isNoindex(seo.path)
   const tags = [
-    `<title>${escapeHtml(seo.title)}</title>`,
-    `<meta name="description" content="${escapeHtml(seo.description)}" />`,
-    `<link rel="canonical" href="${escapeHtml(seo.canonical)}" />`,
-    `<meta property="og:type" content="${escapeHtml(seo.type)}" />`,
-    `<meta property="og:title" content="${escapeHtml(seo.title)}" />`,
-    `<meta property="og:description" content="${escapeHtml(seo.description)}" />`,
-    `<meta property="og:url" content="${escapeHtml(seo.canonical)}" />`,
-    seo.image ? `<meta property="og:image" content="${escapeHtml(seo.image)}" />` : '',
+    '<title>' + escapeHtml(seo.title) + '</title>',
+    '<meta name="description" content="' + escapeHtml(seo.description) + '" />',
+    '<link rel="canonical" href="' + escapeHtml(seo.canonical) + '" />',
+    noindex ? '<meta name="robots" content="noindex, nofollow" />' : '',
+    '<meta property="og:type" content="' + escapeHtml(seo.type) + '" />',
+    '<meta property="og:title" content="' + escapeHtml(seo.title) + '" />',
+    '<meta property="og:description" content="' + escapeHtml(seo.description) + '" />',
+    '<meta property="og:url" content="' + escapeHtml(seo.canonical) + '" />',
+    seo.image ? '<meta property="og:image" content="' + escapeHtml(seo.image) + '" />' : '',
     '<meta name="twitter:card" content="summary_large_image" />',
-    `<meta name="twitter:title" content="${escapeHtml(seo.title)}" />`,
-    `<meta name="twitter:description" content="${escapeHtml(seo.description)}" />`,
-    seo.image ? `<meta name="twitter:image" content="${escapeHtml(seo.image)}" />` : '',
-    seo.jsonLd ? `<script type="application/ld+json">${escapeScriptJson(seo.jsonLd)}</script>` : '',
+    '<meta name="twitter:title" content="' + escapeHtml(seo.title) + '" />',
+    '<meta name="twitter:description" content="' + escapeHtml(seo.description) + '" />',
+    seo.image ? '<meta name="twitter:image" content="' + escapeHtml(seo.image) + '" />' : '',
+    seo.prev ? '<link rel="prev" href="' + escapeHtml(seo.prev) + '" />' : '',
+    seo.next ? '<link rel="next" href="' + escapeHtml(seo.next) + '" />' : '',
+    seo.breadcrumb ? '<script type="application/ld+json">' + escapeScriptJson(seo.breadcrumb) + '</script>' : '',
+    seo.jsonLd ? '<script type="application/ld+json">' + escapeScriptJson(seo.jsonLd) + '</script>' : '',
   ]
   return tags.filter(Boolean).join('\n    ')
 }
 
 export function buildPrerenderDataScript(data) {
-  return `<script>window.__WEBPHIM_PRERENDER_DATA__=${escapeScriptJson(data)}</script>`
+  return '<script>window.__WEBPHIM_PRERENDER_DATA__=' + escapeScriptJson(data) + '</script>'
 }

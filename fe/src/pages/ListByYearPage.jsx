@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
-import { ophimApi } from '../lib/api.js'
+import { cacheKeys, ophimApi } from '../lib/api.js'
+import { usePrerenderData } from '../lib/prerenderData.jsx'
 import { MovieGrid } from '../components/MovieGrid.jsx'
 import { ErrorState, Loading } from '../components/State.jsx'
 import { Pagination } from '../components/Pagination.jsx'
@@ -9,11 +10,19 @@ export function ListByYearPage() {
   const { year } = useParams()
   const [params] = useSearchParams()
   const page = Math.max(1, Number(params.get('page') || 1))
-  const [data, setData] = useState(null)
+  const prerenderData = usePrerenderData()
+  const initialData = prerenderData[cacheKeys.year(year, page)]
+  const [data, setData] = useState(initialData || null)
   const [err, setErr] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!initialData)
 
   useEffect(() => {
+    if (initialData) {
+      setData(initialData)
+      setErr(null)
+      setLoading(false)
+      return
+    }
     let alive = true
     setLoading(true)
     ophimApi

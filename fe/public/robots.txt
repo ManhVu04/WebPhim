@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+Disallow: /dang-nhap
+Disallow: /dang-ky
+Disallow: /quen-mat-khau
+Disallow: /dat-lai-mat-khau
+Disallow: /xac-minh-email
+Disallow: /yeu-thich
+Disallow: /lich-su
+Disallow: /tai-khoan/
+Disallow: /tim-kiem
+
+Sitemap: https://webphim.example/sitemap.xml

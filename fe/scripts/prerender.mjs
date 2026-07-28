@@ -1,6 +1,8 @@
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { cacheKeys } from '../src/lib/api.js'
+import { escapeHtml } from '../src/lib/seo.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(__dirname, '..')
@@ -10,6 +12,7 @@ const templatePath = path.join(distDir, 'index.html')
 
 const API_BASE = normalizeBase(process.env.PRERENDER_API_BASE_URL || 'https://ophim1.com/v1/api')
 const SITE_URL = process.env.VITE_PUBLIC_SITE_URL || 'http://localhost:5173'
+const SITE_BASE = SITE_URL.replace(/\/$/, '')
 const FETCH_PEOPLE = process.env.PRERENDER_FETCH_PEOPLE === 'true'
 const CONCURRENCY = Math.max(1, Number(process.env.PRERENDER_CONCURRENCY || 6))
 const LIST_TYPES = ['phim-moi', 'phim-chieu-rap', 'phim-bo', 'phim-le', 'hoat-hinh', 'phim-sap-chieu']
@@ -18,21 +21,7 @@ function normalizeBase(value) {
   return String(value || '').replace(/\/$/, '')
 }
 
-function keyList(type, page = 1) {
-  return `list:${type}:${page}`
-}
-
-function keyCategory(slug, page = 1) {
-  return `cat:${slug}:${page}`
-}
-
-function keyMovie(slug) {
-  return `movie:${slug}`
-}
-
-function keyPeople(slug) {
-  return `movie-people:${slug}`
-}
+const key = cacheKeys // alias for brevity
 
 function apiUrl(endpoint) {
   return `${API_BASE}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`
@@ -118,6 +107,47 @@ async function writeRoute(route, html) {
   await writeFile(file, html)
 }
 
+
+function sitemapPriority(route) {
+  if (route === '/') return '1.0'
+  if (route.startsWith('/danh-sach/phim-moi')) return '0.9'
+  if (route.startsWith('/danh-sach/')) return '0.8'
+  if (route.startsWith('/phim/')) return '0.8'
+  if (route === '/the-loai' || route === '/quoc-gia' || route === '/nam-phat-hanh') return '0.7'
+  if (/^\/(the-loai|quoc-gia|nam-phat-hanh)\//.test(route)) return '0.6'
+  return '0.5'
+}
+
+function sitemapChangeFreq(route) {
+  if (route === '/' || route.startsWith('/danh-sach/')) return 'daily'
+  return 'weekly'
+}
+
+function generateSitemap(routes) {
+  const now = new Date().toISOString().split('T')[0]
+  const base = SITE_BASE
+  const sorted = [...routes].sort()
+
+  const urls = sorted.map(route => {
+    const loc = base + route
+    return [
+      '  <url>',
+      '    <loc>' + escapeHtml(loc) + '</loc>',
+      '    <lastmod>' + now + '</lastmod>',
+      '    <changefreq>' + sitemapChangeFreq(route) + '</changefreq>',
+      '    <priority>' + sitemapPriority(route) + '</priority>',
+      '  </url>',
+    ].join('\n')
+  }).join('\n')
+
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    urls,
+    '</urlset>',
+  ].join('\n')
+}
+
 async function main() {
   const template = await readFile(templatePath, 'utf8')
   const { render } = await import(pathToFileURL(path.join(serverDir, 'entry-server.js')).href)
@@ -132,7 +162,7 @@ async function main() {
   for (const type of LIST_TYPES) {
     const json = await tryFetch(`/danh-sach/${encodeURIComponent(type)}?page=1`, `list ${type}`)
     if (!json) continue
-    data[keyList(type)] = json
+    data[key.list(type)] = json
     routes.add(`/danh-sach/${type}`)
     addMovieSlugs(movieSlugs, json)
   }
@@ -144,19 +174,49 @@ async function main() {
     const slug = category.slug
     const json = await tryFetch(`/the-loai/${encodeURIComponent(slug)}?page=1`, `category ${slug}`)
     if (!json) return
-    data[keyCategory(slug)] = json
+    data[key.category(slug)] = json
     routes.add(`/the-loai/${slug}`)
+    addMovieSlugs(movieSlugs, json)
+  })
+
+
+
+  routes.add('/the-loai')
+  routes.add('/quoc-gia')
+  routes.add('/nam-phat-hanh')
+
+  const countries = await tryFetch('/quoc-gia', 'countries')
+  const countryItems = normalizeItems(countries)
+  await mapLimit(countryItems, CONCURRENCY, async (country) => {
+    if (!country?.slug) return
+    const slug = country.slug
+    const json = await tryFetch(`/quoc-gia/${encodeURIComponent(slug)}?page=1`, `country ${slug}`)
+    if (!json) return
+    data[key.country(slug)] = json
+    routes.add('/quoc-gia/' + slug)
+    addMovieSlugs(movieSlugs, json)
+  })
+
+  const yearsJson = await tryFetch('/nam-phat-hanh', 'years')
+  const yearItems = normalizeItems(yearsJson)
+  await mapLimit(yearItems, CONCURRENCY, async (item) => {
+    const year = typeof item === 'number' ? item : Number(item?.year ?? item?.name ?? item)
+    if (!Number.isFinite(year)) return
+    const json = await tryFetch(`/nam-phat-hanh/${encodeURIComponent(String(year))}?page=1`, `year ${year}`)
+    if (!json) return
+    data[key.year(year)] = json
+    routes.add('/nam-phat-hanh/' + year)
     addMovieSlugs(movieSlugs, json)
   })
 
   await mapLimit(movieSlugs, CONCURRENCY, async (slug) => {
     const movie = await tryFetch(`/phim/${encodeURIComponent(slug)}`, `movie ${slug}`)
     if (!movie) return
-    data[keyMovie(slug)] = movie
+    data[key.movie(slug)] = movie
     routes.add(`/phim/${slug}`)
     if (FETCH_PEOPLE) {
       const people = await tryFetch(`/phim/${encodeURIComponent(slug)}/peoples`, `people ${slug}`)
-      if (people) data[keyPeople(slug)] = people
+      if (people) data[key.moviePeople(slug)] = people
     }
   })
 
@@ -164,6 +224,30 @@ async function main() {
     const output = render({ url: route, data, siteUrl: SITE_URL })
     await writeRoute(route, inject(template, output))
   }
+
+
+  const sitemap = generateSitemap(routes)
+  await writeFile(path.join(distDir, 'sitemap.xml'), sitemap, 'utf8')
+  console.log(`prerender: wrote sitemap.xml with ${routes.size} URLs`)
+
+  const robots = [
+    "User-agent: *",
+    "Allow: /",
+    "",
+    "Disallow: /dang-nhap",
+    "Disallow: /dang-ky",
+    "Disallow: /quen-mat-khau",
+    "Disallow: /dat-lai-mat-khau",
+    "Disallow: /xac-minh-email",
+    "Disallow: /yeu-thich",
+    "Disallow: /lich-su",
+    "Disallow: /tai-khoan/",
+    "Disallow: /tim-kiem",
+    "",
+    "Sitemap: " + SITE_BASE + "/sitemap.xml",
+  ].join("\n")
+  await writeFile(path.join(distDir, "robots.txt"), robots, "utf8")
+  console.log("prerender: wrote robots.txt")
 
   await rm(serverDir, { recursive: true, force: true })
   console.log(`prerender: wrote ${routes.size} routes`)
