@@ -1,0 +1,12 @@
+/* TEAM */
+Developer: Vu Duc Manh
+GitHub: https://github.com/manhsd0
+
+/* SITE */
+Language: Vietnamese
+Last update: 2026-07-28
+
+/* TECHNOLOGY */
+Frontend: React, Vite, React Router, HLS.js
+Backend: Node.js
+API: OPhim API

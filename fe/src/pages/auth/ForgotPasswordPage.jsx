@@ -43,7 +43,7 @@ export function ForgotPasswordPage() {
 
         <header className="auth-card-header recovery-header">
           <span className="auth-kicker">Khôi phục tài khoản</span>
-          <h2 id="forgot-password-title">Quên mật khẩu?</h2>
+          <h1 id="forgot-password-title">Quên mật khẩu?</h1>
           <p>Nhập email đã đăng ký. Chúng tôi sẽ gửi cho bạn một liên kết đặt lại mật khẩu.</p>
         </header>
 

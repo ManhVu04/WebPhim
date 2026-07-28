@@ -46,7 +46,7 @@ export function SearchPage() {
   return (
     <div className="search-page-shell">
       <div className="section-title search-page-header">
-        <h2>Kết quả tìm kiếm</h2>
+        <h1>Kết quả tìm kiếm</h1>
         <div className="search-page-summary muted">
           Từ khóa: <b>{keyword}</b>
         </div>

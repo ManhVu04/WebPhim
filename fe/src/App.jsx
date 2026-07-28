@@ -1,5 +1,5 @@
 import './App.css'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout.jsx'
 import { AuthProvider } from './lib/auth.jsx'
 import { ErrorBoundary } from './components/ErrorBoundary.jsx'
@@ -21,6 +21,7 @@ import { FavoritesPage } from './pages/user/FavoritesPage.jsx'
 import { HistoryPage } from './pages/user/HistoryPage.jsx'
 import { AccountSecurityPage } from './pages/user/AccountSecurityPage.jsx'
 import { ListByYearPage } from './pages/ListByYearPage.jsx'
+import { NotFoundPage } from './pages/NotFoundPage.jsx'
 import { HomePage } from './pages/HomePage.jsx'
 import { ListPage } from './pages/ListPage.jsx'
 import { MovieDetailPage } from './pages/MovieDetailPage.jsx'
@@ -86,7 +87,7 @@ function App() {
               <Route path="/yeu-thich" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
               <Route path="/lich-su" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
               <Route path="/tai-khoan/bao-mat" element={<ProtectedRoute><AccountSecurityPage /></ProtectedRoute>} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>
         </Suspense>

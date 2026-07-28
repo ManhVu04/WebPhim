@@ -26,7 +26,7 @@ export function VerifyEmailPage() {
   return (
     <div className="auth-container">
       <div className="auth-box panel">
-        <h2>Xác minh email</h2>
+        <h1>Xác minh email</h1>
         {error && <div className="auth-error">{error}</div>}
         {message && <div className="auth-success">{message}</div>}
         {!error && !message && <div className="muted">Đang xác minh...</div>}

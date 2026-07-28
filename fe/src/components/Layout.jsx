@@ -3,8 +3,11 @@ import { Link, NavLink, Outlet, useNavigate, useSearchParams } from 'react-route
 import { ophimApi } from '../lib/api.js'
 import { SearchOverlay } from './SearchOverlay.jsx'
 import { UserMenu } from './UserMenu.jsx'
+import { Breadcrumb } from './Breadcrumb.jsx'
+import { useSeoTitle } from '../lib/useSeoTitle.js'
 
 export function Layout() {
+  useSeoTitle()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const initial = params.get('keyword') || params.get('q') || ''
@@ -305,6 +308,7 @@ export function Layout() {
 
       <main className="content">
         <div className="container">
+          <Breadcrumb />
           <Outlet />
         </div>
       </main>

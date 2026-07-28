@@ -16,6 +16,7 @@ const SITE_BASE = SITE_URL.replace(/\/$/, '')
 const FETCH_PEOPLE = process.env.PRERENDER_FETCH_PEOPLE === 'true'
 const CONCURRENCY = Math.max(1, Number(process.env.PRERENDER_CONCURRENCY || 6))
 const LIST_TYPES = ['phim-moi', 'phim-chieu-rap', 'phim-bo', 'phim-le', 'hoat-hinh', 'phim-sap-chieu']
+const MAX_PAGES = Math.max(1, Number(process.env.PRERENDER_MAX_PAGES || 10))
 
 function normalizeBase(value) {
   return String(value || '').replace(/\/$/, '')
@@ -148,6 +149,24 @@ function generateSitemap(routes) {
   ].join('\n')
 }
 
+function getPageCount(json) {
+  return json?.data?.params?.pagination?.pageCount
+    ? Number(json.data.params.pagination.pageCount)
+    : 1
+}
+
+async function fetchAllPages(baseEndpoint, label, maxPages) {
+  const firstJson = await tryFetch(`${baseEndpoint}?page=1`, `${label} page 1`)
+  if (!firstJson) return { pages: {}, firstData: null }
+  const pagesData = { '?page=1': firstJson }
+  const total = Math.min(getPageCount(firstJson) || 1, maxPages)
+  for (let p = 2; p <= total; p++) {
+    const json = await tryFetch(`${baseEndpoint}?page=${p}`, `${label} page ${p}`)
+    if (json) pagesData[`?page=${p}`] = json
+  }
+  return { pages: pagesData, firstData: firstJson }
+}
+
 async function main() {
   const template = await readFile(templatePath, 'utf8')
   const { render } = await import(pathToFileURL(path.join(serverDir, 'entry-server.js')).href)
@@ -160,11 +179,13 @@ async function main() {
   addMovieSlugs(movieSlugs, home)
 
   for (const type of LIST_TYPES) {
-    const json = await tryFetch(`/danh-sach/${encodeURIComponent(type)}?page=1`, `list ${type}`)
-    if (!json) continue
-    data[key.list(type)] = json
-    routes.add(`/danh-sach/${type}`)
-    addMovieSlugs(movieSlugs, json)
+    const { pages } = await fetchAllPages(`/danh-sach/${encodeURIComponent(type)}`, `list ${type}`, MAX_PAGES)
+    for (const [suffix, pageData] of Object.entries(pages)) {
+      const pageNum = Number(new URLSearchParams(suffix.slice(1)).get('page')) || 1
+      data[key.list(type, pageNum)] = pageData
+      routes.add(`/danh-sach/${type}${pageNum > 1 ? `?page=${pageNum}` : ''}`)
+      addMovieSlugs(movieSlugs, pageData)
+    }
   }
 
   const categories = await tryFetch('/the-loai', 'categories')
@@ -172,14 +193,14 @@ async function main() {
   await mapLimit(categoryItems, CONCURRENCY, async (category) => {
     if (!category?.slug) return
     const slug = category.slug
-    const json = await tryFetch(`/the-loai/${encodeURIComponent(slug)}?page=1`, `category ${slug}`)
-    if (!json) return
-    data[key.category(slug)] = json
-    routes.add(`/the-loai/${slug}`)
-    addMovieSlugs(movieSlugs, json)
+    const { pages } = await fetchAllPages(`/the-loai/${encodeURIComponent(slug)}`, `cat ${slug}`, MAX_PAGES)
+    for (const [suffix, pageData] of Object.entries(pages)) {
+      const pageNum = Number(new URLSearchParams(suffix.slice(1)).get('page')) || 1
+      data[key.category(slug, pageNum)] = pageData
+      routes.add(`/the-loai/${slug}${pageNum > 1 ? `?page=${pageNum}` : ''}`)
+      addMovieSlugs(movieSlugs, pageData)
+    }
   })
-
-
 
   routes.add('/the-loai')
   routes.add('/quoc-gia')
@@ -190,11 +211,13 @@ async function main() {
   await mapLimit(countryItems, CONCURRENCY, async (country) => {
     if (!country?.slug) return
     const slug = country.slug
-    const json = await tryFetch(`/quoc-gia/${encodeURIComponent(slug)}?page=1`, `country ${slug}`)
-    if (!json) return
-    data[key.country(slug)] = json
-    routes.add('/quoc-gia/' + slug)
-    addMovieSlugs(movieSlugs, json)
+    const { pages } = await fetchAllPages(`/quoc-gia/${encodeURIComponent(slug)}`, `country ${slug}`, MAX_PAGES)
+    for (const [suffix, pageData] of Object.entries(pages)) {
+      const pageNum = Number(new URLSearchParams(suffix.slice(1)).get('page')) || 1
+      data[key.country(slug, pageNum)] = pageData
+      routes.add(`/quoc-gia/${slug}${pageNum > 1 ? `?page=${pageNum}` : ''}`)
+      addMovieSlugs(movieSlugs, pageData)
+    }
   })
 
   const yearsJson = await tryFetch('/nam-phat-hanh', 'years')
@@ -202,11 +225,13 @@ async function main() {
   await mapLimit(yearItems, CONCURRENCY, async (item) => {
     const year = typeof item === 'number' ? item : Number(item?.year ?? item?.name ?? item)
     if (!Number.isFinite(year)) return
-    const json = await tryFetch(`/nam-phat-hanh/${encodeURIComponent(String(year))}?page=1`, `year ${year}`)
-    if (!json) return
-    data[key.year(year)] = json
-    routes.add('/nam-phat-hanh/' + year)
-    addMovieSlugs(movieSlugs, json)
+    const { pages } = await fetchAllPages(`/nam-phat-hanh/${encodeURIComponent(String(year))}`, `year ${year}`, MAX_PAGES)
+    for (const [suffix, pageData] of Object.entries(pages)) {
+      const pageNum = Number(new URLSearchParams(suffix.slice(1)).get('page')) || 1
+      data[key.year(year, pageNum)] = pageData
+      routes.add(`/nam-phat-hanh/${year}${pageNum > 1 ? `?page=${pageNum}` : ''}`)
+      addMovieSlugs(movieSlugs, pageData)
+    }
   })
 
   await mapLimit(movieSlugs, CONCURRENCY, async (slug) => {
@@ -243,6 +268,7 @@ async function main() {
     "Disallow: /lich-su",
     "Disallow: /tai-khoan/",
     "Disallow: /tim-kiem",
+    "Disallow: /xem/",
     "",
     "Sitemap: " + SITE_BASE + "/sitemap.xml",
   ].join("\n")

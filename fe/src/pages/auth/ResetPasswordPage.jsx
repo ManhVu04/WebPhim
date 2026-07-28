@@ -63,7 +63,7 @@ export function ResetPasswordPage() {
 
         <header className="auth-card-header recovery-header">
           <span className="auth-kicker">Bảo mật tài khoản</span>
-          <h2 id="reset-password-title">Tạo mật khẩu mới</h2>
+          <h1 id="reset-password-title">Tạo mật khẩu mới</h1>
           <p>Chọn một mật khẩu mạnh và khác với mật khẩu bạn đã sử dụng trước đây.</p>
         </header>
 
