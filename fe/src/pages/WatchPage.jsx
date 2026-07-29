@@ -4,7 +4,7 @@ import { ophimApi } from '../lib/api.js'
 import { ErrorState, Loading } from '../components/State.jsx'
 import { Player } from '../components/Player.jsx'
 import { useAuth } from '../lib/auth.jsx'
-import { authFetch } from '../lib/authApi.js'
+import { authFetch, reportComment } from '../lib/authApi.js'
 import { buildThumbUrl, buildPosterUrl } from '../lib/image.js'
 import { MovieCard } from '../components/MovieCard.jsx'
 import { htmlToText } from '../lib/text.js'
@@ -25,6 +25,14 @@ function CommentsSection({ movieSlug, user }) {
   const [error, setError] = useState(null)
   const [saving, setSaving] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
+
+  // Report modal state
+  const [reportingComment, setReportingComment] = useState(null)
+  const [reportReason, setReportReason] = useState('SPAM')
+  const [reportDetails, setReportDetails] = useState('')
+  const [reportSubmitting, setReportSubmitting] = useState(false)
+  const [reportFeedback, setReportFeedback] = useState(null)
+
   const isAdmin = Boolean(user?.roles?.includes('ADMIN'))
 
   useEffect(() => {
@@ -77,6 +85,28 @@ function CommentsSection({ movieSlug, user }) {
     }
   }
 
+  async function handleReportSubmit() {
+    if (!reportingComment || reportSubmitting) return
+    setReportSubmitting(true)
+    setReportFeedback(null)
+    try {
+      await reportComment(reportingComment.id, {
+        reason: reportReason,
+        details: reportDetails,
+      })
+      setReportFeedback({ type: 'success', message: 'Cảm ơn bạn! Báo cáo của bạn đã được gửi tới quản trị viên.' })
+      setTimeout(() => {
+        setReportingComment(null)
+        setReportFeedback(null)
+        setReportDetails('')
+      }, 1800)
+    } catch (e) {
+      setReportFeedback({ type: 'error', message: e.message || 'Báo cáo thất bại. Vui lòng thử lại sau.' })
+    } finally {
+      setReportSubmitting(false)
+    }
+  }
+
   const items = comments?.items || []
   const totalPages = comments?.totalPages || 0
 
@@ -125,20 +155,32 @@ function CommentsSection({ movieSlug, user }) {
                 <span>{new Date(comment.createdAt).toLocaleString('vi-VN')}</span>
               </div>
               <p>{comment.content}</p>
-              {(comment.ownedByCurrentUser || isAdmin) ? (
-                <div className="comment-actions">
-                  {comment.ownedByCurrentUser ? (
-                    <button type="button" onClick={() => moderate(`/api/comments/${comment.id}`)}>
-                      Xóa
-                    </button>
-                  ) : null}
-                  {isAdmin ? (
-                    <button type="button" onClick={() => moderate(`/api/comments/${comment.id}/hide`)}>
-                      Ẩn
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
+              <div className="comment-actions">
+                {comment.ownedByCurrentUser ? (
+                  <button type="button" onClick={() => moderate(`/api/comments/${comment.id}`)}>
+                    Xóa
+                  </button>
+                ) : null}
+                {isAdmin ? (
+                  <button type="button" onClick={() => moderate(`/api/comments/${comment.id}/hide`)}>
+                    Ẩn
+                  </button>
+                ) : null}
+                {user && !comment.ownedByCurrentUser ? (
+                  <button
+                    type="button"
+                    className="btn-report"
+                    onClick={() => {
+                      setReportingComment(comment)
+                      setReportReason('SPAM')
+                      setReportDetails('')
+                      setReportFeedback(null)
+                    }}
+                  >
+                    🚩 Báo cáo
+                  </button>
+                ) : null}
+              </div>
             </article>
           ))}
         </div>
@@ -160,6 +202,51 @@ function CommentsSection({ movieSlug, user }) {
           </button>
         </div>
       ) : null}
+
+      {reportingComment && (
+        <div className="admin-modal-overlay" onClick={() => setReportingComment(null)}>
+          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Báo cáo bình luận</h3>
+            <p className="text-muted">Bình luận của <strong>{reportingComment.displayName || reportingComment.username}</strong>:</p>
+            <blockquote className="report-comment-preview">"{reportingComment.content}"</blockquote>
+
+            {reportFeedback && (
+              <div className={`report-feedback ${reportFeedback.type}`}>
+                {reportFeedback.message}
+              </div>
+            )}
+
+            <div className="report-form-group">
+              <label className="font-bold">Lý do báo cáo:</label>
+              <select value={reportReason} onChange={(e) => setReportReason(e.target.value)}>
+                <option value="SPAM">Spam / Quảng cáo</option>
+                <option value="INAPPROPRIATE">Ngôn từ thù ghét / Nhạy cảm</option>
+                <option value="HARASSMENT">Xúc phạm / Bắt nạt</option>
+                <option value="MISINFORMATION">Nội dung sai sự thật</option>
+                <option value="OTHER">Lý do khác</option>
+              </select>
+            </div>
+
+            <div className="report-form-group">
+              <label className="font-bold">Chi tiết thêm (không bắt buộc):</label>
+              <textarea
+                value={reportDetails}
+                onChange={(e) => setReportDetails(e.target.value)}
+                placeholder="Mô tả cụ thể vấn đề..."
+                rows={3}
+                maxLength={500}
+              />
+            </div>
+
+            <div className="modal-actions">
+              <button className="btn" type="button" onClick={() => setReportingComment(null)}>Đóng</button>
+              <button className="btnPrimary" type="button" disabled={reportSubmitting} onClick={handleReportSubmit}>
+                {reportSubmitting ? 'Đang gửi...' : 'Gửi báo cáo'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }

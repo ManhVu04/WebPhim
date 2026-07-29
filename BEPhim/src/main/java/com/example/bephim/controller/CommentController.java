@@ -1,7 +1,9 @@
 package com.example.bephim.controller;
 
+import com.example.bephim.dto.CommentReportRequest;
 import com.example.bephim.dto.CommentRequest;
 import com.example.bephim.model.Comment;
+import com.example.bephim.service.CommentReportService;
 import com.example.bephim.service.CommentService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -27,6 +29,7 @@ import java.util.Map;
 public class CommentController {
 
     private final CommentService commentService;
+    private final CommentReportService commentReportService;
 
     @GetMapping({"", "/"})
     public ResponseEntity<?> list(
@@ -83,6 +86,26 @@ public class CommentController {
             return ResponseEntity.status(404).body(Map.of("error", "NOT_FOUND"));
         }
         return ResponseEntity.ok(Map.of("hidden", true));
+    }
+
+    @PostMapping("/{id}/report")
+    public ResponseEntity<?> report(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String id,
+            @Valid @RequestBody CommentReportRequest body) {
+        String userId = requireUserId(jwt);
+        String username = jwt.getSubject();
+        return switch (commentReportService.submitReport(
+                id,
+                userId,
+                username,
+                body.reason(),
+                body.details())) {
+            case SUCCESS -> ResponseEntity.ok(Map.of("reported", true));
+            case NOT_FOUND -> ResponseEntity.status(404).body(Map.of("error", "NOT_FOUND", "message", "Bình luận không tồn tại"));
+            case CANNOT_REPORT_OWN_COMMENT -> ResponseEntity.status(400).body(Map.of("error", "BAD_REQUEST", "message", "Bạn không thể báo cáo bình luận của chính mình"));
+            case ALREADY_REPORTED -> ResponseEntity.status(400).body(Map.of("error", "ALREADY_REPORTED", "message", "Bạn đã báo cáo bình luận này rồi"));
+        };
     }
 
     private static Map<String, Object> commentResponse(Comment comment, Jwt jwt) {

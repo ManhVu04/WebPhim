@@ -10,6 +10,8 @@ import {
   adminHideComment,
   adminUnhideComment,
   adminDeleteComment,
+  adminFetchCommentReports,
+  adminResolveCommentReport,
   adminFetchMailOutbox,
   adminRetryMailOutbox,
   adminRetryAllDeadMailOutbox,
@@ -19,7 +21,7 @@ import './AdminDashboardPage.css'
 
 export default function AdminDashboardPage() {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState('health') // 'health' | 'users' | 'comments' | 'outbox'
+  const [activeTab, setActiveTab] = useState('health') // 'health' | 'users' | 'comments' | 'reports' | 'outbox'
   const [toast, setToast] = useState(null)
   const toastTimeoutRef = useRef(null)
 
@@ -71,6 +73,12 @@ export default function AdminDashboardPage() {
           <span className="tab-icon">💬</span> Quản lý Bình luận
         </button>
         <button
+          className={`admin-tab-btn ${activeTab === 'reports' ? 'active' : ''}`}
+          onClick={() => setActiveTab('reports')}
+        >
+          <span className="tab-icon">🚩</span> Báo cáo Bình luận
+        </button>
+        <button
           className={`admin-tab-btn ${activeTab === 'outbox' ? 'active' : ''}`}
           onClick={() => setActiveTab('outbox')}
         >
@@ -83,6 +91,7 @@ export default function AdminDashboardPage() {
         {activeTab === 'health' && <HealthTab showToast={showToast} />}
         {activeTab === 'users' && <UsersTab showToast={showToast} currentUserId={user?.id} />}
         {activeTab === 'comments' && <CommentsTab showToast={showToast} />}
+        {activeTab === 'reports' && <CommentReportsTab showToast={showToast} />}
         {activeTab === 'outbox' && <OutboxTab showToast={showToast} />}
       </div>
     </div>
@@ -793,6 +802,203 @@ function OutboxTab({ showToast }) {
                           🗑️ Xóa
                         </button>
                       </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="admin-pagination">
+          <button disabled={page === 0} onClick={() => setPage(p => p - 1)}>Trang trước</button>
+          <span>Trang {page + 1} / {totalPages}</span>
+          <button disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Trang sau</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// --- TAB 5: COMMENT REPORTS MODERATION ---
+function CommentReportsTab({ showToast }) {
+  const [reports, setReports] = useState([])
+  const [page, setPage] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('PENDING')
+  const [loading, setLoading] = useState(false)
+  const [actionLoading, setActionLoading] = useState(false)
+
+  const loadReports = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await adminFetchCommentReports({ search, status: statusFilter, page, size: 15 })
+      setReports(res.items || [])
+      setTotalPages(res.totalPages || 1)
+      setTotalItems(res.totalItems || 0)
+    } catch (err) {
+      showToast(err.message || 'Không thể tải danh sách báo cáo', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }, [search, statusFilter, page, showToast])
+
+  useEffect(() => {
+    loadReports()
+  }, [loadReports])
+
+  const handleAction = async (report, action) => {
+    let confirmText = ''
+    if (action === 'HIDE') confirmText = 'Ẩn bình luận này và đánh dấu báo cáo là Đã xử lý?'
+    else if (action === 'DELETE') confirmText = 'XÓA VĨNH VIỄN bình luận này?'
+    else if (action === 'DISMISS') confirmText = 'Bác bỏ báo cáo này (bình luận sẽ giữ nguyên)?'
+
+    if (!window.confirm(confirmText)) return
+
+    setActionLoading(true)
+    try {
+      await adminResolveCommentReport(report.id, action)
+      showToast('Đã xử lý báo cáo thành công!', 'success')
+      loadReports()
+    } catch (err) {
+      showToast(err.message || 'Xử lý báo cáo thất bại', 'error')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const reasonLabel = (reason) => {
+    switch (reason) {
+      case 'SPAM': return 'Spam / Quảng cáo'
+      case 'INAPPROPRIATE': return 'Ngôn từ thù ghét'
+      case 'HARASSMENT': return 'Xúc phạm / Bắt nạt'
+      case 'MISINFORMATION': return 'Tin sai sự thật'
+      default: return reason || 'Khác'
+    }
+  }
+
+  const statusBadge = (status) => {
+    switch (status) {
+      case 'PENDING':
+        return <span className="badge badge-warning">⏳ Đang chờ</span>
+      case 'RESOLVED_HIDDEN':
+        return <span className="badge badge-success">🙈 Đã ẩn bình luận</span>
+      case 'RESOLVED_DELETED':
+        return <span className="badge badge-danger">🗑️ Đã xóa bình luận</span>
+      case 'DISMISSED':
+        return <span className="badge badge-neutral">✖️ Đã bác bỏ</span>
+      case 'PROCESSING':
+        return <span className="badge badge-warning">⚙️ Đang xử lý</span>
+      case 'COMMENT_NOT_FOUND':
+        return <span className="badge badge-neutral">ℹ️ Bình luận không còn tồn tại</span>
+      case 'RESOLUTION_FAILED':
+        return <span className="badge badge-danger">⚠️ Xử lý thất bại</span>
+      default:
+        return <span className="badge badge-neutral">{status}</span>
+    }
+  }
+
+  return (
+    <div className="reports-section">
+      <div className="table-controls">
+        <div className="search-box">
+          <input
+            type="text"
+            placeholder="Tìm theo nội dung, người báo cáo, người bị báo cáo..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+          />
+        </div>
+        <div className="filter-box">
+          <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(0); }}>
+            <option value="">Tất cả trạng thái</option>
+            <option value="PENDING">⏳ Đang chờ xử lý</option>
+            <option value="RESOLVED_HIDDEN">🙈 Đã ẩn bình luận</option>
+            <option value="RESOLVED_DELETED">🗑️ Đã xóa bình luận</option>
+            <option value="DISMISSED">✖️ Đã bác bỏ</option>
+            <option value="PROCESSING">⚙️ Đang xử lý</option>
+            <option value="COMMENT_NOT_FOUND">ℹ️ Bình luận không còn tồn tại</option>
+            <option value="RESOLUTION_FAILED">⚠️ Xử lý thất bại</option>
+          </select>
+        </div>
+        <div className="total-count">Tổng cộng: <strong>{totalItems}</strong> báo cáo</div>
+      </div>
+
+      {loading ? (
+        <div className="admin-loading">Đang tải danh sách báo cáo...</div>
+      ) : (
+        <div className="table-wrapper">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Người báo cáo</th>
+                <th>Tác giả bình luận</th>
+                <th>Nội dung bị báo cáo</th>
+                <th>Lý do</th>
+                <th>Trạng thái</th>
+                <th>Thời gian</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reports.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="text-center">Không có báo cáo nào trong danh sách này</td>
+                </tr>
+              ) : (
+                reports.map((r) => (
+                  <tr key={r.id}>
+                    <td>
+                      <div className="font-bold">@{r.reporterUsername}</div>
+                    </td>
+                    <td>
+                      <div className="font-bold">@{r.reportedUsername}</div>
+                      <div className="text-muted"><code className="slug-code">{r.movieSlug}</code></div>
+                    </td>
+                    <td className="content-cell">
+                      <p className="comment-text-preview">"{r.commentContent}"</p>
+                    </td>
+                    <td>
+                      <span className="badge badge-neutral">{reasonLabel(r.reason)}</span>
+                      {r.details ? <div className="text-muted text-xs mt-1">{r.details}</div> : null}
+                    </td>
+                    <td>{statusBadge(r.status)}</td>
+                    <td>{r.createdAt ? new Date(r.createdAt).toLocaleString('vi-VN') : 'N/A'}</td>
+                    <td>
+                      {r.status === 'PENDING' ? (
+                        <div className="action-btns">
+                          <button
+                            className="btn-icon btn-icon-warning"
+                            disabled={actionLoading}
+                            title="Ẩn bình luận"
+                            onClick={() => handleAction(r, 'HIDE')}
+                          >
+                            🙈 Ẩn
+                          </button>
+                          <button
+                            className="btn-icon btn-icon-danger"
+                            disabled={actionLoading}
+                            title="Xóa vĩnh viễn"
+                            onClick={() => handleAction(r, 'DELETE')}
+                          >
+                            🗑️ Xóa
+                          </button>
+                          <button
+                            className="btn-icon"
+                            disabled={actionLoading}
+                            title="Bác bỏ báo cáo"
+                            onClick={() => handleAction(r, 'DISMISS')}
+                          >
+                            ✖️ Bác bỏ
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-muted text-xs">Đã xử lý</span>
+                      )}
                     </td>
                   </tr>
                 ))

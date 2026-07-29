@@ -229,6 +229,13 @@ export async function authFetch(path, options = {}) {
   return data
 }
 
+export async function reportComment(commentId, { reason, details }) {
+  return authFetch(`/api/comments/${commentId}/report`, {
+    method: 'POST',
+    body: JSON.stringify({ reason, details }),
+  })
+}
+
 // --- ADMIN API HELPERS ---
 
 export async function adminFetchUsers({ search = '', role = '', page = 0, size = 20 } = {}) {
@@ -274,6 +281,22 @@ export async function adminUnhideComment(commentId) {
 
 export async function adminDeleteComment(commentId) {
   return authFetch(`/api/admin/comments/${commentId}`, { method: 'DELETE' })
+}
+
+export async function adminFetchCommentReports({ search = '', status = '', page = 0, size = 20 } = {}) {
+  const params = new URLSearchParams()
+  if (search) params.set('search', search)
+  if (status) params.set('status', status)
+  params.set('page', page)
+  params.set('size', size)
+  return authFetch(`/api/admin/comment-reports?${params.toString()}`)
+}
+
+export async function adminResolveCommentReport(reportId, action) {
+  return authFetch(`/api/admin/comment-reports/${reportId}/resolve`, {
+    method: 'POST',
+    body: JSON.stringify({ action }),
+  })
 }
 
 export async function adminFetchMailOutbox({ status = '', page = 0, size = 20 } = {}) {

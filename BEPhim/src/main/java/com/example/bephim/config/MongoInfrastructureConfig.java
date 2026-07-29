@@ -1,6 +1,7 @@
 package com.example.bephim.config;
 
 import com.example.bephim.model.Comment;
+import com.example.bephim.model.CommentReport;
 import com.example.bephim.model.Favorite;
 import com.example.bephim.model.MailOutboxEntry;
 import com.example.bephim.model.WatchHistory;
@@ -64,6 +65,21 @@ public class MongoInfrastructureConfig {
                             .on("sentAt", Sort.Direction.ASC)
                             .expire(Duration.ofDays(7))
                             .named("sent_mail_ttl_idx"));
+            mongoTemplate.indexOps(CommentReport.class).createIndex(
+                    new Index()
+                            .on("status", Sort.Direction.ASC)
+                            .on("createdAt", Sort.Direction.DESC)
+                            .named("report_status_created_at_idx"));
+            mongoTemplate.indexOps(CommentReport.class).createIndex(
+                    new Index()
+                            .on("createdAt", Sort.Direction.DESC)
+                            .named("report_created_at_idx"));
+            mongoTemplate.indexOps(CommentReport.class).createIndex(
+                    new Index()
+                            .on("commentId", Sort.Direction.ASC)
+                            .on("reporterUserId", Sort.Direction.ASC)
+                            .unique()
+                            .named("report_comment_reporter_unique_idx"));
         };
     }
 }

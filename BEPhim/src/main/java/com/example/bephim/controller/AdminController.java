@@ -1,10 +1,12 @@
 package com.example.bephim.controller;
 
 import com.example.bephim.model.Comment;
+import com.example.bephim.model.CommentReport;
 import com.example.bephim.service.MailMessagePayload;
 import com.example.bephim.model.MailOutboxEntry;
 import com.example.bephim.model.MailOutboxStatus;
 import com.example.bephim.model.User;
+import com.example.bephim.service.CommentReportService;
 import com.example.bephim.service.CommentService;
 import com.example.bephim.service.EmailOutboxService;
 import com.example.bephim.service.UserService;
@@ -32,6 +34,7 @@ public class AdminController {
 
     private final UserService userService;
     private final CommentService commentService;
+    private final CommentReportService commentReportService;
     private final EmailOutboxService emailOutboxService;
     private final MongoTemplate mongoTemplate;
 
@@ -136,6 +139,47 @@ public class AdminController {
         };
     }
 
+    @GetMapping("/comment-reports")
+    public ResponseEntity<?> listCommentReports(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) CommentReport.Status status,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
+        Page<CommentReport> reports = commentReportService.listReports(search, status, page, size);
+        return ResponseEntity.ok(Map.of(
+                "items", reports.getContent().stream().map(AdminController::commentReportAdminResponse).toList(),
+                "totalPages", reports.getTotalPages(),
+                "totalItems", reports.getTotalElements(),
+                "currentPage", reports.getNumber()
+        ));
+    }
+
+    @PostMapping("/comment-reports/{id}/resolve")
+    public ResponseEntity<?> resolveCommentReport(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String id,
+            @RequestBody Map<String, String> body) {
+        String adminUserId = requireUserId(jwt);
+        String action = body.get("action");
+        if (action == null || action.isBlank()) {
+            return ResponseEntity.status(400).body(Map.of("error", "BAD_REQUEST", "message", "action is required"));
+        }
+        return switch (commentReportService.resolveReport(id, action, adminUserId)) {
+            case SUCCESS -> ResponseEntity.ok(Map.of("resolved", true));
+            case NOT_FOUND -> ResponseEntity.status(404).body(Map.of("error", "NOT_FOUND"));
+            case INVALID_ACTION -> ResponseEntity.status(400).body(Map.of("error", "BAD_REQUEST", "message", "Invalid action"));
+            case ALREADY_RESOLVED -> ResponseEntity.status(409).body(Map.of(
+                    "error", "ALREADY_RESOLVED",
+                    "message", "Báo cáo đã được quản trị viên khác xử lý"));
+            case COMMENT_NOT_FOUND -> ResponseEntity.status(404).body(Map.of(
+                    "error", "COMMENT_NOT_FOUND",
+                    "message", "Bình luận không còn tồn tại; báo cáo đã được đóng"));
+            case ACTION_FAILED -> ResponseEntity.status(500).body(Map.of(
+                    "error", "ACTION_FAILED",
+                    "message", "Không thể hoàn tất thao tác kiểm duyệt"));
+        };
+    }
+
     // --- 3. MAIL OUTBOX ERRORS ---
 
     @GetMapping("/mail-outbox")
@@ -232,6 +276,7 @@ public class AdminController {
         metrics.put("adminUsers", userService.countAdminUsers());
         metrics.put("totalComments", commentService.countTotalComments());
         metrics.put("hiddenComments", commentService.countHiddenComments());
+        metrics.put("pendingCommentReports", commentReportService.countPendingReports());
 
         Map<String, Object> response = new HashMap<>();
         response.put("status", overallStatus);
@@ -267,6 +312,24 @@ public class AdminController {
         map.put("hidden", comment.isHidden());
         map.put("hiddenAt", comment.getHiddenAt() != null ? comment.getHiddenAt().toString() : null);
         map.put("createdAt", comment.getCreatedAt() != null ? comment.getCreatedAt().toString() : "");
+        return map;
+    }
+
+    private static Map<String, Object> commentReportAdminResponse(CommentReport report) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", report.getId());
+        map.put("commentId", report.getCommentId());
+        map.put("commentContent", report.getCommentContent());
+        map.put("movieSlug", report.getMovieSlug());
+        map.put("reportedUserId", report.getReportedUserId());
+        map.put("reportedUsername", report.getReportedUsername());
+        map.put("reporterUserId", report.getReporterUserId());
+        map.put("reporterUsername", report.getReporterUsername());
+        map.put("reason", report.getReason());
+        map.put("details", report.getDetails());
+        map.put("status", report.getStatus().name());
+        map.put("createdAt", report.getCreatedAt().toString());
+        map.put("resolvedAt", report.getResolvedAt() != null ? report.getResolvedAt().toString() : null);
         return map;
     }
 
