@@ -24,5 +24,6 @@ use the backend `/api/ophim` proxy.
 `npm run build` creates the regular SPA artifact. Use
 `npm run build:prerender` for a deployable static artifact with route-specific
 HTML, metadata, and hydration data. Set `VITE_PUBLIC_SITE_URL` to the public
-origin before a production prerender so canonical and social URLs do not point
-to localhost. The other `PRERENDER_*` settings are documented in `.env.example`.
+HTTPS origin before a production prerender; the prerender command fails for
+localhost, HTTP, or `.example` hosts. `PRERENDER_MAX_PAGES=0` indexes every API
+page. The other `PRERENDER_*` settings are documented in `.env.example`.

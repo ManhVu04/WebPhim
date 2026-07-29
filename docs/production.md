@@ -40,7 +40,7 @@ cd ../fe
 npm ci
 npm run lint
 npm test
-npm run build
+VITE_PUBLIC_SITE_URL="$APP_PUBLIC_URL" npm run build:prerender
 npm run audit:ci
 ```
 
@@ -73,7 +73,24 @@ server {
   }
 
   location / {
-    try_files $uri $uri/ /index.html;
+    try_files $uri $uri/index.html @spa_fallback;
+  }
+
+  # Apply these permanent redirects only to public, indexable list routes.
+  location ~ ^/(danh-sach/[^/]+|the-loai/[^/]+|quoc-gia/[^/]+|nam-phat-hanh/[0-9]+)$ {
+    if ($arg_page = 1) {
+      return 308 https://$host$uri;
+    }
+    if ($arg_page ~ ^[2-9][0-9]*$) {
+      return 308 https://$host$uri/trang/$arg_page;
+    }
+    try_files $uri $uri/index.html @spa_fallback;
+  }
+
+  # Utility/private/unknown SPA URLs must not enter the search index.
+  location @spa_fallback {
+    add_header X-Robots-Tag "noindex, nofollow" always;
+    rewrite ^ /index.html break;
   }
 }
 ```
@@ -85,6 +102,8 @@ Keep backend port `8080` bound to localhost or blocked by firewall. Terminate TL
 ```bash
 curl -fsS https://webphim.example/actuator/health/readiness
 curl -I https://webphim.example/
+curl -I 'https://webphim.example/the-loai/hanh-dong?page=2'
+curl -I https://webphim.example/the-loai/hanh-dong/trang/2
 ```
 
 Then test in browser: home, movie detail, watch page, register, login, refresh after reload, logout, favorites, history.

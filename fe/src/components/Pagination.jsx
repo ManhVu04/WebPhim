@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
+import { buildPublicPagePath } from '../lib/paginationRoutes.js'
 
 function rangeAround(current, total, radius) {
   const start = Math.max(1, current - radius)
@@ -16,7 +17,7 @@ function setPageSearch(search, page) {
   return s ? `?${s}` : ''
 }
 
-export function Pagination({ pagination }) {
+export function Pagination({ pagination, mode = 'query' }) {
   const loc = useLocation()
   const totalItems = Number(pagination?.totalItems || 0)
   const perPage = Number(pagination?.totalItemsPerPage || 24)
@@ -29,14 +30,17 @@ export function Pagination({ pagination }) {
   const pages = rangeAround(current, totalPages, radius)
   const prev = Math.max(1, current - 1)
   const next = Math.min(totalPages, current + 1)
+  const pageUrl = (page) => mode === 'path'
+    ? buildPublicPagePath(loc.pathname, page)
+    : `${loc.pathname}${setPageSearch(loc.search, page)}`
 
   return (
     <nav className="pagination" aria-label="Phân trang">
       <div className="episodes pagination-list">
-        <Link className={`epBtn${current === 1 ? ' active' : ''}`} to={`${loc.pathname}${setPageSearch(loc.search, 1)}`}>
+        <Link className={`epBtn${current === 1 ? ' active' : ''}`} to={pageUrl(1)}>
           1
         </Link>
-        <Link className="epBtn" to={`${loc.pathname}${setPageSearch(loc.search, prev)}`}>
+        <Link className="epBtn" to={pageUrl(prev)}>
           ‹
         </Link>
 
@@ -44,18 +48,18 @@ export function Pagination({ pagination }) {
           <Link
             key={p}
             className={`epBtn${p === current ? ' active' : ''}`}
-            to={`${loc.pathname}${setPageSearch(loc.search, p)}`}
+            to={pageUrl(p)}
           >
             {p}
           </Link>
         ))}
 
-        <Link className="epBtn" to={`${loc.pathname}${setPageSearch(loc.search, next)}`}>
+        <Link className="epBtn" to={pageUrl(next)}>
           ›
         </Link>
         <Link
           className={`epBtn${current === totalPages ? ' active' : ''}`}
-          to={`${loc.pathname}${setPageSearch(loc.search, totalPages)}`}
+          to={pageUrl(totalPages)}
         >
           {totalPages}
         </Link>

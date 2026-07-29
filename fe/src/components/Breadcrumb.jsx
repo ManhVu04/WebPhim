@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useMemo } from 'react'
+import { useBreadcrumb } from '../lib/useBreadcrumb.jsx'
 import './Breadcrumb.css'
 
 const LABELS = {
@@ -17,11 +18,13 @@ const LABELS = {
   '/lich-su': 'Lịch sử',
 }
 
-export function Breadcrumb({ items }) {
+export function Breadcrumb() {
   const { pathname } = useLocation()
+  const ctx = useBreadcrumb()
 
   const crumbs = useMemo(() => {
-    if (items) return items
+    // Page-provided breadcrumb (e.g. movie detail)
+    if (ctx?.items) return ctx.items
 
     const parts = pathname.replace(/\/$/g, '').split('/').filter(Boolean)
     if (!parts.length) return null
@@ -39,7 +42,7 @@ export function Breadcrumb({ items }) {
     }
 
     return result.length > 1 ? result : null
-  }, [pathname, items])
+  }, [pathname, ctx?.items])
 
   if (!crumbs) return null
 

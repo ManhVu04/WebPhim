@@ -9,6 +9,9 @@ import { useAuth } from '../lib/auth.jsx'
 import { authFetch } from '../lib/authApi.js'
 import { MovieCard } from '../components/MovieCard.jsx'
 import { usePrerenderData } from '../lib/prerenderData.jsx'
+import { useSeoHead } from '../lib/useSeoHead.js'
+import { useBreadcrumb } from '../lib/useBreadcrumb.jsx'
+import { buildBreadcrumbJsonLd, buildMediaJsonLd } from '../lib/seo.js'
 
 function joinNames(arr) {
   if (!Array.isArray(arr)) return ''
@@ -132,6 +135,38 @@ export function MovieDetailPage() {
 
   const title = item?.name || item?.origin_name || slug
   const poster = useMemo(() => buildPosterUrl(cdn, item?.poster_url, item?.thumb_url), [cdn, item])
+
+  // Build structured data for client-side SEO
+  const seoJsonLd = useMemo(() => {
+    if (!item) return undefined
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173'
+    return [
+      buildMediaJsonLd(item, people, baseUrl, poster),
+      buildBreadcrumbJsonLd(item, baseUrl),
+    ].filter(Boolean)
+  }, [item, poster, people])
+
+  useSeoHead({
+    title: item ? title + ' - Xem phim Vietsub HD | WebPhim' : undefined,
+    description: item ? htmlToText(item.content || '').slice(0, 160) || undefined : undefined,
+    type: item ? 'video.movie' : 'website',
+    image: poster,
+    jsonLd: seoJsonLd,
+  })
+
+  // Set visual breadcrumb for movie detail
+  const { setItems } = useBreadcrumb()
+  useEffect(() => {
+    if (!item || !setItems) return
+    const cat = Array.isArray(item.category) ? item.category[0] : null
+    const crumbs = [
+      { label: 'Trang chủ', to: '/' },
+      ...(cat?.name && cat?.slug ? [{ label: cat.name, to: '/the-loai/' + cat.slug }] : []),
+      { label: title, to: null },
+    ]
+    setItems(crumbs)
+    return () => setItems(null)
+  }, [item, title, setItems])
 
   // Preload poster image khi data load xong
   useEffect(() => {
@@ -288,4 +323,3 @@ export function MovieDetailPage() {
     </div>
   )
 }
-

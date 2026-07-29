@@ -1,9 +1,10 @@
 import { apiCache } from './cache.js'
 
-const API_PREFIX = (import.meta.env.VITE_API_BASE_URL ?? '/api/ophim').replace(/\/$/, '')
-const DIRECT_API_PREFIX = String(import.meta.env.VITE_DIRECT_API_BASE_URL ?? '').replace(/\/$/, '')
+const VITE_ENV = import.meta.env ?? {}
+const API_PREFIX = (VITE_ENV.VITE_API_BASE_URL ?? '/api/ophim').replace(/\/$/, '')
+const DIRECT_API_PREFIX = String(VITE_ENV.VITE_DIRECT_API_BASE_URL ?? '').replace(/\/$/, '')
 const DIRECT_FALLBACK_ENABLED =
-  import.meta.env.VITE_ENABLE_DIRECT_API_FALLBACK === 'true' && Boolean(DIRECT_API_PREFIX)
+  VITE_ENV.VITE_ENABLE_DIRECT_API_FALLBACK === 'true' && Boolean(DIRECT_API_PREFIX)
 
 const TTL = {
   home: 20_000,

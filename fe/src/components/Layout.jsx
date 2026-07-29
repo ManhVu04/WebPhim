@@ -77,9 +77,9 @@ export function Layout() {
   const navItems = useMemo(
     () => [
       { to: '/', label: 'Trang chủ' },
-      { to: '/danh-sach/phim-chieu-rap?page=1', label: 'Phim chiếu rạp' },
-      { to: '/danh-sach/phim-sap-chieu?page=1', label: 'Phim sắp chiếu' },
-      { to: '/danh-sach/phim-moi?page=1', label: 'Phim đề cử' },
+      { to: '/danh-sach/phim-chieu-rap', label: 'Phim chiếu rạp' },
+      { to: '/danh-sach/phim-sap-chieu', label: 'Phim sắp chiếu' },
+      { to: '/danh-sach/phim-moi', label: 'Phim đề cử' },
     ],
     [],
   )
@@ -233,16 +233,16 @@ export function Layout() {
         <div className="mobile-menu-section">
           <div className="mobile-menu-section-title">Danh sách</div>
           <div className="mobile-menu-grid">
-            <Link to="/danh-sach/phim-moi?page=1" className="mobile-menu-grid-item" onClick={closeMobileMenu}>
+            <Link to="/danh-sach/phim-moi" className="mobile-menu-grid-item" onClick={closeMobileMenu}>
               Phim mới
             </Link>
-            <Link to="/danh-sach/phim-le?page=1" className="mobile-menu-grid-item" onClick={closeMobileMenu}>
+            <Link to="/danh-sach/phim-le" className="mobile-menu-grid-item" onClick={closeMobileMenu}>
               Phim lẻ
             </Link>
-            <Link to="/danh-sach/phim-bo?page=1" className="mobile-menu-grid-item" onClick={closeMobileMenu}>
+            <Link to="/danh-sach/phim-bo" className="mobile-menu-grid-item" onClick={closeMobileMenu}>
               Phim bộ
             </Link>
-            <Link to="/danh-sach/hoat-hinh?page=1" className="mobile-menu-grid-item" onClick={closeMobileMenu}>
+            <Link to="/danh-sach/hoat-hinh" className="mobile-menu-grid-item" onClick={closeMobileMenu}>
               Hoạt hình
             </Link>
           </div>
@@ -292,7 +292,7 @@ export function Layout() {
             {years.slice(0, 6).map((y) => (
               <Link
                 key={y}
-                to={`/nam-phat-hanh/${y}?page=1`}
+                to={`/nam-phat-hanh/${y}`}
                 className="mobile-menu-grid-item"
                 onClick={async () => {
                   if (!years.length) await ensureYears()

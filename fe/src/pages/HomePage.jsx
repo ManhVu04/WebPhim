@@ -6,13 +6,15 @@ import { cacheKeys, ophimApi } from '../lib/api.js'
 import { buildPosterUrl } from '../lib/image.js'
 import { usePrerenderData } from '../lib/prerenderData.jsx'
 import { htmlToText } from '../lib/text.js'
+import { useSeoHead } from '../lib/useSeoHead.js'
+import { buildSeo } from '../lib/seo.js'
 
 export const HOME_SECTIONS = [
-  { key: 'phim-moi', title: 'Phim mới cập nhật', to: '/danh-sach/phim-moi?page=1' },
-  { key: 'phim-chieu-rap', title: 'Phim chiếu rạp', to: '/danh-sach/phim-chieu-rap?page=1' },
-  { key: 'phim-bo', title: 'Phim bộ mới', to: '/danh-sach/phim-bo?page=1' },
-  { key: 'phim-le', title: 'Phim lẻ mới', to: '/danh-sach/phim-le?page=1' },
-  { key: 'hoat-hinh', title: 'Hoạt hình', to: '/danh-sach/hoat-hinh?page=1' },
+  { key: 'phim-moi', title: 'Phim mới cập nhật', to: '/danh-sach/phim-moi' },
+  { key: 'phim-chieu-rap', title: 'Phim chiếu rạp', to: '/danh-sach/phim-chieu-rap' },
+  { key: 'phim-bo', title: 'Phim bộ mới', to: '/danh-sach/phim-bo' },
+  { key: 'phim-le', title: 'Phim lẻ mới', to: '/danh-sach/phim-le' },
+  { key: 'hoat-hinh', title: 'Hoạt hình', to: '/danh-sach/hoat-hinh' },
 ]
 
 function normalizeList(json) {
@@ -80,6 +82,35 @@ export function HomePage() {
   const heroImage = buildPosterUrl(cdn, hero?.poster_url, hero?.thumb_url)
   const heroTitle = hero?.name || hero?.origin_name || 'WebPhim'
   const heroText = htmlToText(hero?.content || '').slice(0, 190)
+
+  const seo = useMemo(() => {
+    const fallbackSection = sections.find((section) => section.items.length)
+    const seoHome = home || {
+      data: {
+        items: fallbackSection?.items || [],
+        seoOnPage: {
+          titleHead: 'WebPhim - Xem phim online miễn phí, HD Vietsub',
+          descriptionHead: 'WebPhim - Xem phim online miễn phí, cập nhật phim mới nhanh nhất với chất lượng HD, Vietsub. Phim lẻ, phim bộ, hoạt hình mới nhất.',
+        },
+      },
+    }
+
+    return buildSeo({
+      url: '/',
+      siteUrl: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173',
+      data: { [cacheKeys.home()]: seoHome },
+    })
+  }, [home, sections])
+
+  useSeoHead({
+    title: seo.title,
+    description: seo.description,
+    canonical: seo.canonical,
+    robots: seo.robots,
+    type: seo.type,
+    image: seo.image,
+    jsonLd: seo.itemList,
+  })
 
   if (loading) return <Loading label="Đang tải trang chủ..." />
   if (err && !hero) return <ErrorState error={err} />

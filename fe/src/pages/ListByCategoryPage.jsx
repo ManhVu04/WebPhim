@@ -1,15 +1,18 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { cacheKeys, ophimApi } from '../lib/api.js'
 import { MovieGrid } from '../components/MovieGrid.jsx'
 import { ErrorState, Loading } from '../components/State.jsx'
 import { Pagination } from '../components/Pagination.jsx'
 import { usePrerenderData } from '../lib/prerenderData.jsx'
+import { useSeoHead } from '../lib/useSeoHead.js'
+import { buildSeo } from '../lib/seo.js'
+import { buildPublicPagePath, normalizePage } from '../lib/paginationRoutes.js'
 
 export function ListByCategoryPage() {
-  const { slug } = useParams()
+  const { slug, page: routePage } = useParams()
   const [params] = useSearchParams()
-  const page = Math.max(1, Number(params.get('page') || 1))
+  const page = normalizePage(routePage || params.get('page'))
   const prerenderData = usePrerenderData()
   const initialData = prerenderData[cacheKeys.category(slug, page)]
   const [data, setData] = useState(initialData || null)
@@ -39,13 +42,27 @@ export function ListByCategoryPage() {
     }
   }, [slug, page, initialData])
 
-  if (loading) return <Loading label="Đang tải phim theo thể loại..." />
-  if (err) return <ErrorState error={err} />
-
-  const items = data?.data?.items || []
+  const items = useMemo(() => data?.data?.items || [], [data])
   const cdn = data?.data?.APP_DOMAIN_CDN_IMAGE || ''
   const title = data?.data?.titlePage || data?.data?.name || slug
   const pagination = data?.data?.params?.pagination
+
+  const seo = useMemo(() => buildSeo({
+    url: buildPublicPagePath(`/the-loai/${slug}`, page),
+    siteUrl: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173',
+    data: data ? { [cacheKeys.category(slug, page)]: data } : {},
+  }), [data, page, slug])
+
+  useSeoHead({
+    title: seo.title,
+    description: seo.description,
+    type: seo.type,
+    image: seo.image,
+    jsonLd: seo.itemList,
+  })
+
+  if (loading) return <Loading label="Đang tải phim theo thể loại..." />
+  if (err) return <ErrorState error={err} />
 
   return (
     <>
@@ -54,7 +71,7 @@ export function ListByCategoryPage() {
         <div className="muted">{items.length} phim</div>
       </div>
       <MovieGrid cdnBase={cdn} items={items} />
-      <Pagination pagination={pagination} />
+      <Pagination pagination={pagination} mode="path" />
     </>
   )
 }
