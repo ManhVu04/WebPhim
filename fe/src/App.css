@@ -630,7 +630,8 @@
 .section-title h1,
 .section-title h2,
 .page-heading h1,
-.comments-placeholder h2 {
+.comments-placeholder h2,
+.comments-head h2 {
   margin: 0;
   color: rgba(255, 255, 255, 0.82);
   font-size: 26px;
@@ -1007,6 +1008,92 @@
 
 .comments-placeholder {
   min-height: 48px;
+}
+
+.comments-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.comments-head,
+.comment-form-actions,
+.comment-meta,
+.comment-pages {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.comments-head span,
+.comment-form-actions span,
+.comment-meta span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.comment-form {
+  display: grid;
+  gap: 10px;
+}
+
+.comment-form textarea {
+  width: 100%;
+  padding: 12px 14px;
+  resize: vertical;
+}
+
+.comment-login,
+.comment-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.comment-login {
+  padding: 14px;
+  color: var(--muted);
+}
+
+.comment-login a {
+  color: var(--accent);
+  font-weight: 850;
+}
+
+.comment-list {
+  display: grid;
+  gap: 10px;
+}
+
+.comment-item {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.comment-item p {
+  margin: 0;
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.comment-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.comment-actions button {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-weight: 800;
+  padding: 0;
+}
+
+.comment-actions button:hover {
+  color: var(--accent);
 }
 
 .site-footer {

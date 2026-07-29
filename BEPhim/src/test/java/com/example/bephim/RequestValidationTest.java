@@ -1,9 +1,12 @@
 package com.example.bephim;
 
+import com.example.bephim.controller.CommentController;
 import com.example.bephim.controller.FavoriteController;
 import com.example.bephim.controller.WatchHistoryController;
+import com.example.bephim.dto.CommentRequest;
 import com.example.bephim.dto.FavoriteRequest;
 import com.example.bephim.dto.WatchHistoryRequest;
+import com.example.bephim.service.CommentService;
 import com.example.bephim.service.FavoriteService;
 import com.example.bephim.service.WatchHistoryService;
 import jakarta.validation.Validation;
@@ -51,6 +54,12 @@ class RequestValidationTest {
     }
 
     @Test
+    void commentContentIsRequiredAndBounded() {
+        assertThat(validator.validate(new CommentRequest("movie", "x".repeat(1001)))).hasSize(1);
+        assertThat(validator.validate(new CommentRequest("movie", ""))).hasSize(1);
+    }
+
+    @Test
     void favoritePaginationRejectsNegativePageAndOversizedPage() throws Exception {
         FavoriteController controller = new FavoriteController(mock(FavoriteService.class));
         Method method = FavoriteController.class.getMethod("list", Jwt.class, int.class, int.class);
@@ -66,5 +75,14 @@ class RequestValidationTest {
 
         assertThat(validator.forExecutables().validateParameters(
                 controller, method, new Object[]{null, -1, 0})).hasSize(2);
+    }
+
+    @Test
+    void commentPaginationRejectsMissingSlugNegativePageAndZeroSize() throws Exception {
+        CommentController controller = new CommentController(mock(CommentService.class));
+        Method method = CommentController.class.getMethod("list", Jwt.class, String.class, int.class, int.class);
+
+        assertThat(validator.forExecutables().validateParameters(
+                controller, method, new Object[]{null, "", -1, 0})).hasSize(3);
     }
 }

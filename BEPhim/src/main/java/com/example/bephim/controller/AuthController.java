@@ -41,6 +41,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -113,7 +114,8 @@ public class AuthController {
                 "username", valueOrEmpty(jwt.getSubject()),
                 "displayName", valueOrEmpty(jwt.getClaimAsString("displayName")),
                 "email", valueOrEmpty(jwt.getClaimAsString("email")),
-                "emailVerified", Boolean.TRUE.equals(jwt.getClaim("emailVerified"))
+                "emailVerified", Boolean.TRUE.equals(jwt.getClaim("emailVerified")),
+                "roles", rolesOrEmpty(jwt.getClaim("roles"))
         ));
     }
 
@@ -223,6 +225,7 @@ public class AuthController {
         body.put("displayName", user.getDisplayName());
         body.put("email", valueOrEmpty(user.getEmail()));
         body.put("emailVerified", user.isEmailVerified());
+        body.put("roles", user.getRoles() == null ? List.of() : user.getRoles());
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshCookie(tokens.refreshToken()).toString())
@@ -326,6 +329,10 @@ public class AuthController {
 
     private static String valueOrEmpty(String value) {
         return value == null ? "" : value;
+    }
+
+    private static Object rolesOrEmpty(Object roles) {
+        return roles == null ? List.of() : roles;
     }
 
     private static String resolveRefreshTokenKey(String rawRefreshToken, Jwt decodedRefreshToken) {

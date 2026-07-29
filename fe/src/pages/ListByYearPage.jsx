@@ -37,7 +37,7 @@ export function ListByYearPage() {
     return () => {
       alive = false
     }
-  }, [year, page])
+  }, [year, page, initialData])
 
   if (loading) return <Loading label="Đang tải phim theo năm..." />
   if (err) return <ErrorState error={err} />
@@ -58,4 +58,3 @@ export function ListByYearPage() {
     </>
   )
 }
-

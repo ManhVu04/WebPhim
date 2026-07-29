@@ -45,6 +45,11 @@ class PaginationValidationHttpTest {
         assertBadPagination("/api/history?page=-1&size=0");
     }
 
+    @Test
+    void commentsRejectInvalidPaginationOverHttp() {
+        assertBadPagination("/api/comments?movieSlug=demo&page=-1&size=0");
+    }
+
     private void assertBadPagination(String path) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken());

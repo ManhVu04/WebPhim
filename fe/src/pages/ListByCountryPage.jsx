@@ -35,7 +35,7 @@ export function ListByCountryPage() {
       .catch((e) => alive && setErr(e))
       .finally(() => alive && setLoading(false))
     return () => { alive = false }
-  }, [slug, page])
+  }, [slug, page, initialData])
 
   if (loading) return <Loading label="Đang tải phim theo quốc gia..." />
   if (err) return <ErrorState error={err} />
@@ -56,4 +56,3 @@ export function ListByCountryPage() {
     </>
   )
 }
-

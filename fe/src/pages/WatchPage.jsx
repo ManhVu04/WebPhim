@@ -15,6 +15,155 @@ function clampIndex(n, max) {
   return Math.min(n, max - 1)
 }
 
+const COMMENT_PAGE_SIZE = 20
+
+function CommentsSection({ movieSlug, user }) {
+  const [comments, setComments] = useState(null)
+  const [page, setPage] = useState(0)
+  const [content, setContent] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
+  const isAdmin = Boolean(user?.roles?.includes('ADMIN'))
+
+  useEffect(() => {
+    let alive = true
+    setLoading(true)
+    const query = new URLSearchParams({
+      movieSlug,
+      page: String(page),
+      size: String(COMMENT_PAGE_SIZE),
+    })
+    authFetch(`/api/comments?${query}`)
+      .then((data) => {
+        if (!alive) return
+        setComments(data)
+        setError(null)
+      })
+      .catch((e) => alive && setError(e))
+      .finally(() => alive && setLoading(false))
+    return () => {
+      alive = false
+    }
+  }, [movieSlug, page, reloadKey])
+
+  async function submitComment(event) {
+    event.preventDefault()
+    const text = content.trim()
+    if (!text || saving) return
+    setSaving(true)
+    try {
+      await authFetch('/api/comments', {
+        method: 'POST',
+        body: JSON.stringify({ movieSlug, content: text }),
+      })
+      setContent('')
+      setPage(0)
+      setReloadKey((value) => value + 1)
+    } catch (e) {
+      setError(e)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function moderate(path) {
+    try {
+      await authFetch(path, { method: path.endsWith('/hide') ? 'POST' : 'DELETE' })
+      setReloadKey((value) => value + 1)
+    } catch (e) {
+      setError(e)
+    }
+  }
+
+  const items = comments?.items || []
+  const totalPages = comments?.totalPages || 0
+
+  return (
+    <section className="comments-panel">
+      <div className="comments-head">
+        <h2>Bình luận</h2>
+        <span>{comments?.totalItems || 0} bình luận</span>
+      </div>
+
+      {user ? (
+        <form className="comment-form" onSubmit={submitComment}>
+          <textarea
+            value={content}
+            onChange={(event) => setContent(event.target.value)}
+            placeholder="Viết bình luận..."
+            maxLength={1000}
+            rows={3}
+          />
+          <div className="comment-form-actions">
+            <span>{content.trim().length}/1000</span>
+            <button className="btnPrimary" type="submit" disabled={!content.trim() || saving}>
+              {saving ? 'Đang gửi...' : 'Gửi bình luận'}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div className="comment-login">
+          <Link to="/dang-nhap">Đăng nhập</Link> để bình luận.
+        </div>
+      )}
+
+      {error ? <div className="muted">Không tải được bình luận.</div> : null}
+      {loading ? <div className="muted">Đang tải bình luận...</div> : null}
+
+      {!loading && !items.length ? (
+        <div className="muted">Chưa có bình luận nào.</div>
+      ) : null}
+
+      {items.length ? (
+        <div className="comment-list">
+          {items.map((comment) => (
+            <article className="comment-item" key={comment.id}>
+              <div className="comment-meta">
+                <strong>{comment.displayName || comment.username || 'Người dùng'}</strong>
+                <span>{new Date(comment.createdAt).toLocaleString('vi-VN')}</span>
+              </div>
+              <p>{comment.content}</p>
+              {(comment.ownedByCurrentUser || isAdmin) ? (
+                <div className="comment-actions">
+                  {comment.ownedByCurrentUser ? (
+                    <button type="button" onClick={() => moderate(`/api/comments/${comment.id}`)}>
+                      Xóa
+                    </button>
+                  ) : null}
+                  {isAdmin ? (
+                    <button type="button" onClick={() => moderate(`/api/comments/${comment.id}/hide`)}>
+                      Ẩn
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+            </article>
+          ))}
+        </div>
+      ) : null}
+
+      {totalPages > 1 ? (
+        <div className="comment-pages">
+          <button className="btn" type="button" disabled={page <= 0} onClick={() => setPage((value) => value - 1)}>
+            Mới hơn
+          </button>
+          <span>{page + 1}/{totalPages}</span>
+          <button
+            className="btn"
+            type="button"
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage((value) => value + 1)}
+          >
+            Cũ hơn
+          </button>
+        </div>
+      ) : null}
+    </section>
+  )
+}
+
 export function WatchPage() {
   const { slug } = useParams()
   const [params, setParams] = useSearchParams()
@@ -220,9 +369,7 @@ export function WatchPage() {
         </section>
       ) : null}
 
-      <section className="comments-placeholder">
-        <h2>Bình luận</h2>
-      </section>
+      <CommentsSection movieSlug={slug} user={user} />
 
       {recommendationItems.length ? (
         <section className="movie-section">

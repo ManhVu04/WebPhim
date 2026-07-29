@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -19,7 +20,8 @@ public class SecurityConfig {
             HttpSecurity http,
             CorsConfigurationSource corsConfigurationSource,
             @Qualifier("resourceServerJwtDecoder") JwtDecoder jwtDecoder,
-            @Value("${app.security.csp.allowed-frame-hosts:}") String allowedFrameHosts) throws Exception {
+            @Value("${app.security.csp.allowed-frame-hosts:}") String allowedFrameHosts,
+            @Value("${app.security.csp.allow-localhost-connect:true}") boolean allowLocalhostConnect) throws Exception {
         return http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
@@ -33,6 +35,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/forgot-password").permitAll()
                         .requestMatchers("/api/auth/reset-password").permitAll()
                         .requestMatchers("/api/auth/verify-email").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/comments", "/api/comments/").permitAll()
                         .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers("/api/auth/change-password").authenticated()
                         .requestMatchers("/api/auth/sessions/revoke").authenticated()
@@ -40,11 +43,15 @@ public class SecurityConfig {
                         // Protected endpoints
                         .requestMatchers("/api/favorites/**").authenticated()
                         .requestMatchers("/api/history/**").authenticated()
-                        // Allow everything else (OAuth2 endpoints, static, etc.)
-                        .anyRequest().permitAll())
+                        .requestMatchers("/api/comments", "/api/comments/", "/api/comments/**").authenticated()
+                        .requestMatchers("/actuator/health/**").permitAll()
+                        .anyRequest().denyAll())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.decoder(jwtDecoder)))
-                .headers(headers -> SecurityHeadersConfig.applySecurityHeaders(headers, allowedFrameHosts))
+                .headers(headers -> SecurityHeadersConfig.applySecurityHeaders(
+                        headers,
+                        allowedFrameHosts,
+                        allowLocalhostConnect))
                 .build();
     }
 }

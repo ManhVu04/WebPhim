@@ -24,7 +24,6 @@ public final class SecurityHeadersConfig {
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: blob: https://img.ophim.live https://img.ophim.cc https://wsrv.nl https://image.tmdb.org",
             "font-src 'self' data:",
-            "connect-src 'self' http://localhost:* http://127.0.0.1:* https:",
             "media-src 'self' blob: https:",
             "worker-src 'self' blob:",
             "manifest-src 'self'",
@@ -48,12 +47,19 @@ public final class SecurityHeadersConfig {
     private SecurityHeadersConfig() {
     }
 
-    static void applySecurityHeaders(HeadersConfigurer<HttpSecurity> headers, String allowedFrameHosts) {
+    static void applySecurityHeaders(
+            HeadersConfigurer<HttpSecurity> headers,
+            String allowedFrameHosts,
+            boolean allowLocalhostConnect) {
         List<String> frameHosts = buildFrameSrc(allowedFrameHosts);
+        String connectSrc = allowLocalhostConnect
+                ? "connect-src 'self' http://localhost:* http://127.0.0.1:* https:"
+                : "connect-src 'self' https:";
         // frame-src: allow embeds from any https source + configured hosts
         // frame-ancestors: 'self' only — prevent clickjacking by 3rd-party sites
         String policy = String.join("; ",
                 CONTENT_SECURITY_POLICY,
+                connectSrc,
                 "frame-src https: " + String.join(" ", frameHosts),
                 "frame-ancestors 'self'");
 

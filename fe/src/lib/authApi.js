@@ -42,6 +42,7 @@ function userFromResponse(data) {
     displayName: data.displayName,
     email: data.email,
     emailVerified: data.emailVerified,
+    roles: Array.isArray(data.roles) ? data.roles : [],
   }
 }
 

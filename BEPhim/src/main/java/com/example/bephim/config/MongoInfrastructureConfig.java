@@ -1,5 +1,6 @@
 package com.example.bephim.config;
 
+import com.example.bephim.model.Comment;
 import com.example.bephim.model.Favorite;
 import com.example.bephim.model.MailOutboxEntry;
 import com.example.bephim.model.WatchHistory;
@@ -37,6 +38,17 @@ public class MongoInfrastructureConfig {
                             .on("userId", Sort.Direction.ASC)
                             .on("watchedAt", Sort.Direction.DESC)
                             .named("user_watched_at_idx"));
+            mongoTemplate.indexOps(Comment.class).createIndex(
+                    new Index()
+                            .on("movieSlug", Sort.Direction.ASC)
+                            .on("hidden", Sort.Direction.ASC)
+                            .on("createdAt", Sort.Direction.DESC)
+                            .named("movie_visible_created_at_idx"));
+            mongoTemplate.indexOps(Comment.class).createIndex(
+                    new Index()
+                            .on("userId", Sort.Direction.ASC)
+                            .on("createdAt", Sort.Direction.DESC)
+                            .named("comment_user_created_at_idx"));
             mongoTemplate.indexOps(MailOutboxEntry.class).createIndex(
                     new Index()
                             .on("status", Sort.Direction.ASC)

@@ -24,7 +24,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = "app.jwt.key-file=/tmp/webphim-test-jwt-rsa-key.jwk"
+        properties = {
+                "app.jwt.key-file=/tmp/webphim-test-jwt-rsa-key.jwk",
+                "app.security.csp.allow-localhost-connect=false"
+        }
 )
 @AutoConfigureTestRestTemplate
 class BePhimApplicationTests {
@@ -53,6 +56,23 @@ class BePhimApplicationTests {
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).containsKey("status");
+    }
+
+    @Test
+    void cspCanDisableLocalhostConnectSources() {
+        ResponseEntity<Map> response = restTemplate.getForEntity("/actuator/health/liveness", Map.class);
+
+        assertThat(response.getHeaders().getFirst("Content-Security-Policy"))
+                .contains("connect-src 'self' https:")
+                .doesNotContain("localhost")
+                .doesNotContain("127.0.0.1");
+    }
+
+    @Test
+    void unknownRoutesAreDeniedByDefault() {
+        ResponseEntity<Map> response = authenticatedGet("/api/not-a-real-route");
+
+        assertThat(response.getStatusCode().value()).isEqualTo(403);
     }
 
     @Test
@@ -134,6 +154,34 @@ class BePhimApplicationTests {
         assertThat(response.getBody()).containsEntry("status", 400);
     }
 
+    @Test
+    void commentsArePubliclyReadable() {
+        ResponseEntity<Map> response = restTemplate.getForEntity(
+                "/api/comments?movieSlug=demo&page=0&size=20",
+                Map.class);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody()).containsKey("items");
+    }
+
+    @Test
+    void commentPostRequiresAuthentication() {
+        ResponseEntity<Map> response = postJson(
+                "/api/comments",
+                "{\"movieSlug\":\"demo\",\"content\":\"hello\"}");
+
+        assertThat(response.getStatusCode().value()).isEqualTo(401);
+    }
+
+    @Test
+    void commentPostRejectsInvalidBody() {
+        ResponseEntity<Map> response = authenticatedPostJson("/api/comments", "{\"movieSlug\":\"demo\"}");
+
+        assertThat(response.getStatusCode().value()).isEqualTo(400);
+        assertThat(response.getBody()).containsEntry("error", "BAD_REQUEST");
+        assertThat(response.getBody()).containsEntry("status", 400);
+    }
+
     private ResponseEntity<Map> postJson(String path, String body) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -145,6 +193,12 @@ class BePhimApplicationTests {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(accessToken());
         return restTemplate.exchange(path, HttpMethod.POST, new HttpEntity<>(body, headers), Map.class);
+    }
+
+    private ResponseEntity<Map> authenticatedGet(String path) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken());
+        return restTemplate.exchange(path, HttpMethod.GET, new HttpEntity<>(headers), Map.class);
     }
 
     private String accessToken() {
