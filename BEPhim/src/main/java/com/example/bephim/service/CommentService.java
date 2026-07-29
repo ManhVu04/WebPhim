@@ -9,11 +9,32 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 
+import org.springframework.data.domain.Sort;
+
 @Service
 @RequiredArgsConstructor
 public class CommentService {
 
     private final CommentRepository commentRepository;
+
+    public Page<Comment> listAdminComments(String search, Boolean hiddenFilter, int page, int size) {
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        boolean hasSearch = search != null && !search.isBlank();
+
+        if (hasSearch && hiddenFilter != null) {
+            String trimmed = search.trim();
+            return commentRepository.findByHiddenAndMovieSlugContainingIgnoreCaseOrHiddenAndUsernameContainingIgnoreCaseOrHiddenAndContentContainingIgnoreCase(
+                    hiddenFilter, trimmed, hiddenFilter, trimmed, hiddenFilter, trimmed, pageable);
+        } else if (hasSearch) {
+            String trimmed = search.trim();
+            return commentRepository.findByMovieSlugContainingIgnoreCaseOrUsernameContainingIgnoreCaseOrContentContainingIgnoreCase(
+                    trimmed, trimmed, trimmed, pageable);
+        } else if (hiddenFilter != null) {
+            return commentRepository.findByHidden(hiddenFilter, pageable);
+        } else {
+            return commentRepository.findAll(pageable);
+        }
+    }
 
     public Page<Comment> listVisible(String movieSlug, int page, int size) {
         return commentRepository.findByMovieSlugAndHiddenFalseOrderByCreatedAtDesc(
@@ -53,6 +74,24 @@ public class CommentService {
         comment.setHiddenByUserId(adminUserId);
         commentRepository.save(comment);
         return true;
+    }
+
+    public boolean unhideComment(String id) {
+        Comment comment = commentRepository.findById(id).orElse(null);
+        if (comment == null) return false;
+        comment.setHidden(false);
+        comment.setHiddenAt(null);
+        comment.setHiddenByUserId(null);
+        commentRepository.save(comment);
+        return true;
+    }
+
+    public long countTotalComments() {
+        return commentRepository.count();
+    }
+
+    public long countHiddenComments() {
+        return commentRepository.countByHiddenTrue();
     }
 
     public enum DeleteResult {

@@ -11,6 +11,9 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+
 @Configuration
 public class SecurityConfig {
 
@@ -20,12 +23,15 @@ public class SecurityConfig {
             HttpSecurity http,
             CorsConfigurationSource corsConfigurationSource,
             @Qualifier("resourceServerJwtDecoder") JwtDecoder jwtDecoder,
+            JwtAuthenticationConverter jwtAuthenticationConverter,
             @Value("${app.security.csp.allowed-frame-hosts:}") String allowedFrameHosts,
             @Value("${app.security.csp.allow-localhost-connect:true}") boolean allowLocalhostConnect) throws Exception {
         return http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        // Admin endpoints
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // Public endpoints
                         .requestMatchers("/api/ophim/**").permitAll()
                         .requestMatchers("/api/auth/register").permitAll()
@@ -47,11 +53,22 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health/**").permitAll()
                         .anyRequest().denyAll())
                 .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.decoder(jwtDecoder)))
+                        .jwt(jwt -> jwt.decoder(jwtDecoder).jwtAuthenticationConverter(jwtAuthenticationConverter)))
                 .headers(headers -> SecurityHeadersConfig.applySecurityHeaders(
                         headers,
                         allowedFrameHosts,
                         allowLocalhostConnect))
                 .build();
+    }
+
+    @Bean
+    JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
+        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
+
+        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+        return jwtAuthenticationConverter;
     }
 }

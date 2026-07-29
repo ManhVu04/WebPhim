@@ -68,6 +68,16 @@ export function UserMenu() {
           >
             Bảo mật tài khoản
           </Link>
+          {user.roles && Array.isArray(user.roles) && user.roles.includes('ADMIN') && (
+            <Link
+              to="/admin"
+              className="dropdownItem font-bold"
+              style={{ color: '#60a5fa' }}
+              onClick={() => setOpen(false)}
+            >
+              ⚡ Admin Dashboard
+            </Link>
+          )}
           <button 
             type="button"
             className="dropdownItem user-panel-danger"

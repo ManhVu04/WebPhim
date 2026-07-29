@@ -44,6 +44,7 @@ function applyTheme(theme) {
 }
 
 const WatchPage = lazy(() => import('./pages/WatchPage.jsx').then((m) => ({ default: m.WatchPage })))
+const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage.jsx'))
 
 function App() {
   const [theme, setTheme] = useState(getInitialTheme)
@@ -87,6 +88,7 @@ function App() {
               <Route path="/yeu-thich" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
               <Route path="/lich-su" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
               <Route path="/tai-khoan/bao-mat" element={<ProtectedRoute><AccountSecurityPage /></ProtectedRoute>} />
+              <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboardPage /></ProtectedRoute>} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>

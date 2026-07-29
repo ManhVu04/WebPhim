@@ -8,6 +8,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -170,6 +173,81 @@ public class UserService implements UserDetailsService {
             int currentVersion = user.getRefreshTokenVersion();
             user.setRefreshTokenVersion(currentVersion + 1);
             userRepository.save(user);
+        }
+    }
+
+    public Page<User> listUsers(String search, String roleFilter, int page, int size) {
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        boolean hasSearch = search != null && !search.isBlank();
+        boolean hasRole = roleFilter != null && !roleFilter.isBlank();
+
+        if (hasSearch && hasRole) {
+            String trimmed = search.trim();
+            String role = roleFilter.trim().toUpperCase();
+            return userRepository.findByRolesContainingAndUsernameContainingIgnoreCaseOrRolesContainingAndEmailContainingIgnoreCaseOrRolesContainingAndDisplayNameContainingIgnoreCase(
+                    role, trimmed, role, trimmed, role, trimmed, pageable);
+        } else if (hasSearch) {
+            String trimmed = search.trim();
+            return userRepository.findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrDisplayNameContainingIgnoreCase(
+                    trimmed, trimmed, trimmed, pageable);
+        } else if (hasRole) {
+            return userRepository.findByRolesContaining(roleFilter.trim().toUpperCase(), pageable);
+        } else {
+            return userRepository.findAll(pageable);
+        }
+    }
+
+    public User updateUserRoles(String targetUserId, List<String> newRoles) {
+        User target = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + targetUserId));
+
+        List<String> sanitizedRoles = newRoles == null || newRoles.isEmpty()
+                ? List.of("USER")
+                : newRoles.stream()
+                .map(String::trim)
+                .map(String::toUpperCase)
+                .filter(r -> r.equals("USER") || r.equals("ADMIN"))
+                .distinct()
+                .toList();
+
+        if (sanitizedRoles.isEmpty()) {
+            sanitizedRoles = List.of("USER");
+        }
+
+        // Prevent removing the last admin from the system
+        if (target.getRoles() != null && target.getRoles().contains("ADMIN") && !sanitizedRoles.contains("ADMIN")) {
+            ensureNotLastAdmin();
+        }
+
+        target.setRoles(sanitizedRoles);
+        return userRepository.save(target);
+    }
+
+    public void deleteUser(String targetUserId, String adminUserId) {
+        if (targetUserId.equals(adminUserId)) {
+            throw new IllegalArgumentException("Cannot delete your own account");
+        }
+        User target = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + targetUserId));
+
+        if (target.getRoles() != null && target.getRoles().contains("ADMIN")) {
+            ensureNotLastAdmin();
+        }
+        userRepository.delete(target);
+    }
+
+    public long countTotalUsers() {
+        return userRepository.count();
+    }
+
+    public long countAdminUsers() {
+        return userRepository.countByRolesContaining("ADMIN");
+    }
+
+    private void ensureNotLastAdmin() {
+        long totalAdmins = userRepository.countByRolesContaining("ADMIN");
+        if (totalAdmins <= 1) {
+            throw new IllegalStateException("Cannot remove the only admin from the system");
         }
     }
 

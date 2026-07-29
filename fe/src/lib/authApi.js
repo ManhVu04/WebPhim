@@ -228,3 +228,74 @@ export async function authFetch(path, options = {}) {
   }
   return data
 }
+
+// --- ADMIN API HELPERS ---
+
+export async function adminFetchUsers({ search = '', role = '', page = 0, size = 20 } = {}) {
+  const params = new URLSearchParams()
+  if (search) params.set('search', search)
+  if (role) params.set('role', role)
+  params.set('page', page)
+  params.set('size', size)
+  return authFetch(`/api/admin/users?${params.toString()}`)
+}
+
+export async function adminUpdateUserRoles(userId, roles) {
+  return authFetch(`/api/admin/users/${userId}/roles`, {
+    method: 'PUT',
+    body: JSON.stringify({ roles }),
+  })
+}
+
+export async function adminRevokeUserSessions(userId) {
+  return authFetch(`/api/admin/users/${userId}/revoke-sessions`, { method: 'POST' })
+}
+
+export async function adminDeleteUser(userId) {
+  return authFetch(`/api/admin/users/${userId}`, { method: 'DELETE' })
+}
+
+export async function adminFetchComments({ search = '', hidden = null, page = 0, size = 20 } = {}) {
+  const params = new URLSearchParams()
+  if (search) params.set('search', search)
+  if (hidden !== null && hidden !== undefined) params.set('hidden', hidden)
+  params.set('page', page)
+  params.set('size', size)
+  return authFetch(`/api/admin/comments?${params.toString()}`)
+}
+
+export async function adminHideComment(commentId) {
+  return authFetch(`/api/admin/comments/${commentId}/hide`, { method: 'POST' })
+}
+
+export async function adminUnhideComment(commentId) {
+  return authFetch(`/api/admin/comments/${commentId}/unhide`, { method: 'POST' })
+}
+
+export async function adminDeleteComment(commentId) {
+  return authFetch(`/api/admin/comments/${commentId}`, { method: 'DELETE' })
+}
+
+export async function adminFetchMailOutbox({ status = '', page = 0, size = 20 } = {}) {
+  const params = new URLSearchParams()
+  if (status) params.set('status', status)
+  params.set('page', page)
+  params.set('size', size)
+  return authFetch(`/api/admin/mail-outbox?${params.toString()}`)
+}
+
+export async function adminRetryMailOutbox(id) {
+  return authFetch(`/api/admin/mail-outbox/${id}/retry`, { method: 'POST' })
+}
+
+export async function adminRetryAllDeadMailOutbox() {
+  return authFetch('/api/admin/mail-outbox/retry-all-dead', { method: 'POST' })
+}
+
+export async function adminDeleteMailOutbox(id) {
+  return authFetch(`/api/admin/mail-outbox/${id}`, { method: 'DELETE' })
+}
+
+export async function adminFetchAppHealth() {
+  return authFetch('/api/admin/health')
+}
