@@ -49,6 +49,11 @@ Copy `BEPhim/target/BEPhim-0.0.1-SNAPSHOT.jar` to the server and run it as a sys
 ## Nginx shape
 
 ```nginx
+map $uri $spa_robots {
+  default "noindex, nofollow";
+  ~^/(xem/[^/]+|tim-kiem)$ "noindex, follow";
+}
+
 server {
   listen 443 ssl http2;
   server_name webphim.example;
@@ -89,7 +94,7 @@ server {
 
   # Utility/private/unknown SPA URLs must not enter the search index.
   location @spa_fallback {
-    add_header X-Robots-Tag "noindex, nofollow" always;
+    add_header X-Robots-Tag $spa_robots always;
     rewrite ^ /index.html break;
   }
 }

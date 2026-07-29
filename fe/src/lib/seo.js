@@ -86,7 +86,7 @@ function getPage(url, siteUrl) {
  * Build canonical URL.
  * - Strips page=1
  * - Strips non-SEO params (server, ep, etc.)
- * - /xem/:slug → /phim/:slug  (watch page canonicalizes to detail)
+ * - Keeps /xem/:slug self-canonical while stripping episode params
  */
 export function canonicalUrl(url, siteUrl) {
   const parsed = new URL(url, siteUrl)
@@ -278,6 +278,13 @@ export function selectPrerenderData(url = '/', data = {}) {
     include('list:phim-moi:1')
     return selected
   }
+  const watchMatch = path.match(/^\/xem\/([^/]+)$/)
+  if (watchMatch) {
+    const slug = decodeURIComponent(watchMatch[1])
+    include('movie:' + slug)
+    include('list:phim-moi:1')
+    return selected
+  }
   const listMatch = path.match(/^\/danh-sach\/([^/]+)(?:\/trang\/\d+)?$/)
   if (listMatch) {
     include('list:' + decodeURIComponent(listMatch[1]) + ':' + page)
@@ -396,6 +403,27 @@ function movieSeo(data, peopleData, siteUrl) {
   }
 }
 
+export function buildWatchSeo(item, { episodeName = '', image = '' } = {}) {
+  const title = item?.name || item?.origin_name
+  if (!title) return { ...DEFAULT_SEO, type: 'website', image: '' }
+
+  return {
+    title: `${title}${episodeName ? ` - ${episodeName}` : ''} - Xem phim online | WebPhim`,
+    description: truncate(item.content || item.description || title + ' Vietsub HD, xem phim online tại WebPhim.'),
+    type: episodeName ? 'video.episode' : 'video.movie',
+    image,
+  }
+}
+
+function watchSeo(data) {
+  const payload = data?.data || data || {}
+  const item = payload.item || payload.data?.item || payload
+  const cdn = payload.APP_DOMAIN_CDN_IMAGE || payload.APP_DOMAIN_CDN || ''
+  return buildWatchSeo(item, {
+    image: buildPosterUrl(cdn, item?.poster_url, item?.thumb_url),
+  })
+}
+
 export function buildSeo({ url = '/', data = {}, siteUrl = 'http://localhost:5173' }) {
   const parsed = new URL(url, siteUrl)
   const path = parsed.pathname.replace(/\/$/, '') || '/'
@@ -404,6 +432,13 @@ export function buildSeo({ url = '/', data = {}, siteUrl = 'http://localhost:517
   let pagination = null
   if (path === '/') {
     seo = listSeo(data.home, siteUrl)
+  } else if (path === '/tim-kiem') {
+    seo = {
+      title: 'Tìm kiếm phim - WebPhim',
+      description: 'Tìm kiếm phim theo tên phim tại WebPhim.',
+      type: 'website',
+      image: '',
+    }
   } else if (path === '/the-loai') {
     seo = {
       title: 'Thể loại phim - WebPhim',
@@ -427,6 +462,7 @@ export function buildSeo({ url = '/', data = {}, siteUrl = 'http://localhost:517
     }
   } else {
     const movieMatch = path.match(/^\/phim\/([^/]+)$/)
+    const watchMatch = path.match(/^\/xem\/([^/]+)$/)
     const listMatch = path.match(/^\/danh-sach\/([^/]+)(?:\/trang\/\d+)?$/)
     const categoryMatch = path.match(/^\/the-loai\/([^/]+)(?:\/trang\/\d+)?$/)
     const countryMatch = path.match(/^\/quoc-gia\/([^/]+)(?:\/trang\/\d+)?$/)
@@ -435,6 +471,9 @@ export function buildSeo({ url = '/', data = {}, siteUrl = 'http://localhost:517
       const slug = decodeURIComponent(movieMatch[1])
       const movieData = data['movie:' + slug]
       seo = movieSeo(movieData, data['movie-people:' + slug], siteUrl)
+    } else if (watchMatch) {
+      const slug = decodeURIComponent(watchMatch[1])
+      seo = watchSeo(data['movie:' + slug])
     } else if (listMatch) {
       const listData = data['list:' + decodeURIComponent(listMatch[1]) + ':' + page]
       seo = listSeo(listData, siteUrl)

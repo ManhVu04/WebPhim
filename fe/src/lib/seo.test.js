@@ -8,6 +8,7 @@ import {
   buildWebSiteJsonLd,
   buildItemListJsonLd,
   buildMediaJsonLd,
+  buildWatchSeo,
   buildHeadTags,
 } from './seo.js'
 
@@ -56,6 +57,46 @@ describe('buildSeo', () => {
     expect(seo.jsonLd.numberOfEpisodes).toBeUndefined()
     expect(seo.jsonLd.aggregateRating.ratingValue).toBe(8.5)
     expect(seo.videoJsonLd).toBeUndefined()
+  })
+
+  it('builds noindex share metadata for a watch route', () => {
+    const seo = buildSeo({
+      url: '/xem/demo?server=0&ep=1',
+      siteUrl: 'https://webphim.example',
+      data: {
+        'movie:demo': {
+          data: {
+            APP_DOMAIN_CDN_IMAGE: 'https://img.example',
+            item: {
+              name: 'Demo Phim',
+              slug: 'demo',
+              content: '<p>Nội dung phim demo.</p>',
+              poster_url: 'demo.jpg',
+            },
+          },
+        },
+      },
+    })
+
+    expect(seo.title).toBe('Demo Phim - Xem phim online | WebPhim')
+    expect(seo.description).toBe('Nội dung phim demo.')
+    expect(seo.canonical).toBe('https://webphim.example/xem/demo')
+    expect(seo.robots).toBe('noindex, follow')
+    expect(seo.type).toBe('video.movie')
+    expect(seo.image).toBe('https://img.example/uploads/movies/demo.jpg')
+    expect(seo.jsonLd).toBeUndefined()
+  })
+
+  it('builds generic noindex share metadata for the search route', () => {
+    const seo = buildSeo({
+      url: '/tim-kiem?keyword=matrix&page=2',
+      siteUrl: 'https://webphim.example',
+    })
+
+    expect(seo.title).toBe('Tìm kiếm phim - WebPhim')
+    expect(seo.description).toBe('Tìm kiếm phim theo tên phim tại WebPhim.')
+    expect(seo.canonical).toBe('https://webphim.example/tim-kiem')
+    expect(seo.robots).toBe('noindex, follow')
   })
 
   it('drops page=1 from canonical URLs', () => {
@@ -159,6 +200,20 @@ describe('canonicalUrl', () => {
       .toBe('https://webphim.example/phim/demo')
     expect(canonicalUrl('/danh-sach/phim-moi?page=abc', 'https://webphim.example'))
       .toBe('https://webphim.example/danh-sach/phim-moi')
+  })
+})
+
+describe('buildWatchSeo', () => {
+  it('includes the selected episode in client metadata', () => {
+    expect(buildWatchSeo(
+      { name: 'Demo Phim', content: '<p>Nội dung phim demo.</p>' },
+      { episodeName: 'Tập 2', image: 'https://img.example/demo.jpg' },
+    )).toEqual({
+      title: 'Demo Phim - Tập 2 - Xem phim online | WebPhim',
+      description: 'Nội dung phim demo.',
+      type: 'video.episode',
+      image: 'https://img.example/demo.jpg',
+    })
   })
 })
 
@@ -293,6 +348,13 @@ describe('selectPrerenderData', () => {
     expect(selectPrerenderData('/phim/demo', data)).toEqual({
       'movie:demo': data['movie:demo'],
       'movie-people:demo': data['movie-people:demo'],
+      'list:phim-moi:1': data['list:phim-moi:1'],
+    })
+  })
+
+  it('keeps movie and recommendation data on a watch route', () => {
+    expect(selectPrerenderData('/xem/demo?server=0&ep=1', data)).toEqual({
+      'movie:demo': data['movie:demo'],
       'list:phim-moi:1': data['list:phim-moi:1'],
     })
   })

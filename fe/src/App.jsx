@@ -26,6 +26,7 @@ import { NotFoundPage } from './pages/NotFoundPage.jsx'
 import { HomePage } from './pages/HomePage.jsx'
 import { ListPage } from './pages/ListPage.jsx'
 import { MovieDetailPage } from './pages/MovieDetailPage.jsx'
+import { WatchPage } from './pages/WatchPage.jsx'
 import { legacyPaginationTarget } from './lib/paginationRoutes.js'
 import { useSeoHead } from './lib/useSeoHead.js'
 
@@ -46,7 +47,6 @@ function applyTheme(theme) {
   document.documentElement.dataset.theme = theme
 }
 
-const WatchPage = lazy(() => import('./pages/WatchPage.jsx').then((m) => ({ default: m.WatchPage })))
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage.jsx'))
 
 function LegacyPaginationRedirect() {
@@ -97,7 +97,7 @@ function App() {
               <Route path="/quen-mat-khau" element={<NoIndexRoute><ForgotPasswordPage /></NoIndexRoute>} />
               <Route path="/dat-lai-mat-khau" element={<NoIndexRoute><ResetPasswordPage /></NoIndexRoute>} />
               <Route path="/xac-minh-email" element={<NoIndexRoute><VerifyEmailPage /></NoIndexRoute>} />
-              <Route path="/tim-kiem" element={<NoIndexRoute follow><SearchPage /></NoIndexRoute>} />
+              <Route path="/tim-kiem" element={<SearchPage />} />
               <Route path="/the-loai" element={<CategoriesPage />} />
               <Route path="/the-loai/:slug" element={<ListByCategoryPage />} />
               <Route path="/the-loai/:slug/trang/:page" element={<ListByCategoryPage />} />
@@ -110,7 +110,7 @@ function App() {
               <Route path="/danh-sach/:type" element={<ListPage />} />
               <Route path="/danh-sach/:type/trang/:page" element={<ListPage />} />
               <Route path="/phim/:slug" element={<MovieDetailPage />} />
-              <Route path="/xem/:slug" element={<NoIndexRoute follow><WatchPage /></NoIndexRoute>} />
+              <Route path="/xem/:slug" element={<WatchPage />} />
               <Route path="/yeu-thich" element={<NoIndexRoute><ProtectedRoute><FavoritesPage /></ProtectedRoute></NoIndexRoute>} />
               <Route path="/lich-su" element={<NoIndexRoute><ProtectedRoute><HistoryPage /></ProtectedRoute></NoIndexRoute>} />
               <Route path="/tai-khoan/bao-mat" element={<NoIndexRoute><ProtectedRoute><AccountSecurityPage /></ProtectedRoute></NoIndexRoute>} />

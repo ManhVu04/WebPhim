@@ -100,6 +100,7 @@ function stripManagedHead(template) {
   return template
     .replace(/\s*<title>[\s\S]*?<\/title>/, '')
     .replace(/\s*<meta name="description"[^>]*>/, '')
+    .replace(/\s*<meta name="robots"[^>]*>/g, '')
     .replace(/\s*<link rel="canonical"[^>]*>/g, '')
     .replace(/\s*<link rel="alternate"[^>]*hreflang[^>]*>/g, '')
     .replace(/\s*<meta (?:property|name)="(?:og|twitter):[^>]*>/g, '')
@@ -254,13 +255,14 @@ async function writeSitemapGroup(prefix, routes, entryBuilder, options = {}) {
 async function main() {
   const template = await readFile(templatePath, 'utf8')
   const { render } = await import(pathToFileURL(path.join(serverDir, 'entry-server.js')).href)
-  const routes = new Set(['/'])
+  const routes = new Set(['/', '/tim-kiem'])
   const data = {}
   const movieSlugs = new Set()
 
   // Track routes by category for sub-sitemaps
   const staticRoutes = new Set(['/'])
   const movieRoutes = new Set()
+  const watchRoutes = new Set()
   const listRoutes = new Set()
 
   const home = await fetchRequired('/home', 'home data')
@@ -343,6 +345,9 @@ async function main() {
     const route = `/phim/${slug}`
     routes.add(route)
     movieRoutes.add(route)
+    const watchRoute = `/xem/${slug}`
+    routes.add(watchRoute)
+    watchRoutes.add(watchRoute)
     if (FETCH_PEOPLE) {
       const people = await tryFetch(`/phim/${encodeURIComponent(slug)}/peoples`, `people ${slug}`)
       if (people) data[key.moviePeople(slug)] = people
@@ -394,6 +399,8 @@ async function main() {
   console.log(`prerender: wrote sitemap index with ${sitemapNames.length} sub-sitemaps (${routes.size} URLs total)`)
   console.log(`  - static: ${staticRoutes.size} URLs`)
   console.log(`  - movies: ${movieRoutes.size} URLs (with image tags)`)
+  console.log(`  - watch: ${watchRoutes.size} noindex URLs (excluded from sitemap)`)
+  console.log('  - search: 1 noindex URL (excluded from sitemap)')
   console.log(`  - lists: ${listRoutes.size} URLs`)
 
   // -----------------------------------------------------------------------

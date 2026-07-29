@@ -35,7 +35,7 @@ export function useSeoHead(opts = {}) {
   const canonical = opts.canonical || canonicalUrl(pathname + search, SITE_URL)
   const robots = opts.robots || robotsContent(pathname)
   const type = opts.type || 'website'
-  const image = opts.image || ''
+  const image = absoluteHeadUrl(opts.image)
 
   useEffect(() => {
     // Title
@@ -118,6 +118,15 @@ export function useSeoHead(opts = {}) {
       managedScriptsRef.current = []
     }
   }, [title, description, canonical, robots, type, image, pathname, opts.jsonLd])
+}
+
+function absoluteHeadUrl(value) {
+  if (!value) return ''
+  try {
+    return new URL(value, SITE_URL).toString()
+  } catch {
+    return ''
+  }
 }
 
 function setMetaProperty(property, content) {

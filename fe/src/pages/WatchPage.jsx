@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { ophimApi } from '../lib/api.js'
+import { cacheKeys, ophimApi } from '../lib/api.js'
 import { ErrorState, Loading } from '../components/State.jsx'
 import { Player } from '../components/Player.jsx'
 import { useAuth } from '../lib/auth.jsx'
@@ -8,6 +8,9 @@ import { authFetch, reportComment } from '../lib/authApi.js'
 import { buildThumbUrl, buildPosterUrl } from '../lib/image.js'
 import { MovieCard } from '../components/MovieCard.jsx'
 import { htmlToText } from '../lib/text.js'
+import { useSeoHead } from '../lib/useSeoHead.js'
+import { usePrerenderData } from '../lib/prerenderData.jsx'
+import { buildWatchSeo } from '../lib/seo.js'
 
 function clampIndex(n, max) {
   if (!Number.isFinite(n) || n < 0) return 0
@@ -259,22 +262,37 @@ function CommentsSection({ movieSlug, user }) {
 export function WatchPage() {
   const { slug } = useParams()
   const [params, setParams] = useSearchParams()
+  const prerenderData = usePrerenderData()
+  const initialMovie = prerenderData[cacheKeys.movie(slug)] || null
+  const initialRecommendations = prerenderData[cacheKeys.list('phim-moi', 1)] || null
 
-  const [movie, setMovie] = useState(null)
+  const [movie, setMovie] = useState(initialMovie)
   const [err, setErr] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!initialMovie)
 
-  const qServer = Number(params.get('server') || 0)
-  const qEp = Number(params.get('ep') || 0)
+  const requestedServer = Number(params.get('server') || 0)
+  const requestedEpisode = Number(params.get('ep') || 0)
+  const qServer = Number.isInteger(requestedServer) && requestedServer >= 0 ? requestedServer : 0
+  const qEp = Number.isInteger(requestedEpisode) && requestedEpisode >= 0 ? requestedEpisode : 0
 
-  const [serverIdx, setServerIdx] = useState(0)
-  const [epIdx, setEpIdx] = useState(0)
+  const [serverIdx, setServerIdx] = useState(qServer)
+  const [epIdx, setEpIdx] = useState(qEp)
   const [showAllEps, setShowAllEps] = useState(false)
-  const [recommendations, setRecommendations] = useState(null)
+  const [recommendations, setRecommendations] = useState(initialRecommendations)
   const { user } = useAuth()
 
   useEffect(() => {
+    if (initialMovie) {
+      setMovie(initialMovie)
+      setRecommendations(initialRecommendations)
+      setErr(null)
+      setLoading(false)
+      return undefined
+    }
+
     let alive = true
+    setMovie(null)
+    setRecommendations(null)
     setLoading(true)
     Promise.allSettled([ophimApi.movie(slug), ophimApi.list('phim-moi', 1)])
       .then((results) => {
@@ -294,11 +312,12 @@ export function WatchPage() {
     return () => {
       alive = false
     }
-  }, [slug])
+  }, [slug, initialMovie, initialRecommendations])
 
   const item = movie?.data?.item || movie?.data?.data?.item || movie?.data || null
   const cdnBase = movie?.data?.APP_DOMAIN_CDN_IMAGE || movie?.data?.data?.APP_DOMAIN_CDN_IMAGE || ''
   const title = item?.name || item?.origin_name || slug
+  const poster = useMemo(() => buildPosterUrl(cdnBase, item?.poster_url, item?.thumb_url), [cdnBase, item])
 
   const servers = item && Array.isArray(item.episodes) ? item.episodes : []
   const safeServerIdx = useMemo(() => clampIndex(qServer, servers.length), [qServer, servers.length])
@@ -309,6 +328,19 @@ export function WatchPage() {
   )
   const safeEpIdx = useMemo(() => clampIndex(qEp, serverData.length), [qEp, serverData.length])
   const currentEp = serverData[safeEpIdx] || null
+  const episodeName = currentEp?.name || ''
+  const watchSeo = useMemo(
+    () => buildWatchSeo(item, { episodeName, image: poster }),
+    [episodeName, item, poster],
+  )
+
+  useSeoHead({
+    title: item ? watchSeo.title : 'Xem phim online - WebPhim',
+    description: item ? watchSeo.description : undefined,
+    robots: 'noindex, follow',
+    type: watchSeo.type,
+    image: watchSeo.image,
+  })
 
   // Record only the last episode selected during the debounce window.
   useEffect(() => {
@@ -354,6 +386,7 @@ export function WatchPage() {
 
   // Keep URL in sync when user changes
   useEffect(() => {
+    if (!item) return
     if (serverIdx === qServer && epIdx === qEp) return
     setParams(
       (prev) => {
@@ -364,7 +397,7 @@ export function WatchPage() {
       },
       { replace: true },
     )
-  }, [serverIdx, epIdx, qServer, qEp, setParams])
+  }, [item, serverIdx, epIdx, qServer, qEp, setParams])
 
   const visibleEps = useMemo(() => {
     if (showAllEps) return serverData
