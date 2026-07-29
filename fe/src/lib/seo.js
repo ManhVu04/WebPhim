@@ -83,10 +83,10 @@ function getPage(url, siteUrl) {
 }
 
 /**
- * Build canonical URL.
- * - Strips page=1
- * - Strips non-SEO params (server, ep, etc.)
- * - Keeps /xem/:slug self-canonical while stripping episode params
+ * Build a normalized canonical URL for all routes.
+ * - Public list pagination: page 1 uses the base route; page 2+ uses /trang/N.
+ * - Other routes strip query parameters, hashes, and trailing slashes.
+ * - Watch routes remain self-canonical at /xem/:slug, collapsing server/episode variants.
  */
 export function canonicalUrl(url, siteUrl) {
   const parsed = new URL(url, siteUrl)
