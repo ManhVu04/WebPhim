@@ -224,7 +224,12 @@ export async function authFetch(path, options = {}) {
     throw new ApiError(errorMessage(data, 'Session expired'), 401, 'UNAUTHORIZED')
   }
   if (!res.ok) {
-    throw new ApiError(errorMessage(data, `HTTP ${res.status}`), res.status, data.error)
+    const err = new ApiError(errorMessage(data, `HTTP ${res.status}`), res.status, data.error)
+    if (res.status === 429) {
+      const ra = res.headers.get('Retry-After')
+      err.retryAfter = ra ? parseInt(ra, 10) : null
+    }
+    throw err
   }
   return data
 }

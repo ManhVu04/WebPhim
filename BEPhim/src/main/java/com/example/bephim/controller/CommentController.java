@@ -5,6 +5,7 @@ import com.example.bephim.dto.CommentRequest;
 import com.example.bephim.model.Comment;
 import com.example.bephim.service.CommentReportService;
 import com.example.bephim.service.CommentService;
+import com.example.bephim.service.RequestRateLimiter;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -30,6 +31,7 @@ public class CommentController {
 
     private final CommentService commentService;
     private final CommentReportService commentReportService;
+    private final RequestRateLimiter requestRateLimiter;
 
     @GetMapping({"", "/"})
     public ResponseEntity<?> list(
@@ -53,6 +55,7 @@ public class CommentController {
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody CommentRequest body) {
         String userId = requireUserId(jwt);
+        requestRateLimiter.checkComment(userId);
         Comment comment = commentService.addComment(
                 userId,
                 jwt.getSubject(),

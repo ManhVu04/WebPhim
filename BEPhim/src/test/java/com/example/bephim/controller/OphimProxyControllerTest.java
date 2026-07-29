@@ -26,7 +26,7 @@ class OphimProxyControllerTest {
     void setUp() {
         RestClient.Builder builder = RestClient.builder().baseUrl("https://ophim.example/v1/api/");
         server = MockRestServiceServer.bindTo(builder).build();
-        RequestRateLimiter limiter = new RequestRateLimiter(100, 100, 100, 100, 100, 100);
+        RequestRateLimiter limiter = new RequestRateLimiter(100, 100, 100, 100, 100, 100, 100);
         controller = new OphimProxyController(builder.build(), limiter);
     }
 

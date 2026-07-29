@@ -70,7 +70,12 @@ function CommentsSection({ movieSlug, user }) {
       setPage(0)
       setReloadKey((value) => value + 1)
     } catch (e) {
-      setError(e)
+      if (e.status === 429) {
+        const retryAfter = e.retryAfter || 60
+        setError({ message: `Bạn bình luận quá nhanh. Vui lòng chờ ${retryAfter} giây.` })
+      } else {
+        setError(e)
+      }
     } finally {
       setSaving(false)
     }
@@ -139,7 +144,7 @@ function CommentsSection({ movieSlug, user }) {
         </div>
       )}
 
-      {error ? <div className="muted">Không tải được bình luận.</div> : null}
+      {error ? <div className="comment-error">{error.message || 'Không tải được bình luận.'}</div> : null}
       {loading ? <div className="muted">Đang tải bình luận...</div> : null}
 
       {!loading && !items.length ? (

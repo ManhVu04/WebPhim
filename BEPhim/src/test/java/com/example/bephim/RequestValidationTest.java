@@ -9,6 +9,7 @@ import com.example.bephim.dto.WatchHistoryRequest;
 import com.example.bephim.service.CommentReportService;
 import com.example.bephim.service.CommentService;
 import com.example.bephim.service.FavoriteService;
+import com.example.bephim.service.RequestRateLimiter;
 import com.example.bephim.service.WatchHistoryService;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -80,7 +81,7 @@ class RequestValidationTest {
 
     @Test
     void commentPaginationRejectsMissingSlugNegativePageAndZeroSize() throws Exception {
-        CommentController controller = new CommentController(mock(CommentService.class), mock(CommentReportService.class));
+        CommentController controller = new CommentController(mock(CommentService.class), mock(CommentReportService.class), mock(RequestRateLimiter.class));
         Method method = CommentController.class.getMethod("list", Jwt.class, String.class, int.class, int.class);
 
         assertThat(validator.forExecutables().validateParameters(

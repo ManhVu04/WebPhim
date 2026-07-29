@@ -11,7 +11,7 @@ class RequestRateLimiterTest {
 
     @Test
     void rejectsRequestsAfterConfiguredWindowLimit() {
-        RequestRateLimiter limiter = new RequestRateLimiter(1, 1, 1, 1, 1, 1);
+        RequestRateLimiter limiter = new RequestRateLimiter(1, 1, 1, 1, 1, 1, 1);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("192.0.2.10");
 
@@ -24,7 +24,7 @@ class RequestRateLimiterTest {
 
     @Test
     void keepsLoginCountersSeparateByNormalizedUsername() {
-        RequestRateLimiter limiter = new RequestRateLimiter(1, 1, 1, 1, 1, 10);
+        RequestRateLimiter limiter = new RequestRateLimiter(1, 1, 1, 1, 1, 1, 10);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("192.0.2.11");
 

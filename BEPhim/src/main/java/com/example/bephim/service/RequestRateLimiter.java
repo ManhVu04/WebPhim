@@ -25,6 +25,7 @@ public class RequestRateLimiter {
     private final int resendVerificationLimit;
     private final int refreshLimit;
     private final int proxyLimit;
+    private final int commentLimit;
 
     public RequestRateLimiter(
             @Value("${app.rate-limit.login-per-10-minutes:10}") int loginLimit,
@@ -32,13 +33,15 @@ public class RequestRateLimiter {
             @Value("${app.rate-limit.forgot-password-per-hour:5}") int forgotPasswordLimit,
             @Value("${app.rate-limit.resend-verification-per-hour:3}") int resendVerificationLimit,
             @Value("${app.rate-limit.refresh-per-10-minutes:60}") int refreshLimit,
-            @Value("${app.rate-limit.proxy-per-minute:120}") int proxyLimit) {
+            @Value("${app.rate-limit.proxy-per-minute:120}") int proxyLimit,
+            @Value("${app.rate-limit.comment-per-minute:5}") int commentLimit) {
         this.loginLimit = loginLimit;
         this.registerLimit = registerLimit;
         this.forgotPasswordLimit = forgotPasswordLimit;
         this.resendVerificationLimit = resendVerificationLimit;
         this.refreshLimit = refreshLimit;
         this.proxyLimit = proxyLimit;
+        this.commentLimit = commentLimit;
     }
 
     public void checkLogin(HttpServletRequest request, String username) {
@@ -63,6 +66,10 @@ public class RequestRateLimiter {
 
     public void checkProxy(HttpServletRequest request) {
         check("proxy", clientAddress(request), proxyLimit, Duration.ofMinutes(1));
+    }
+
+    public void checkComment(String userId) {
+        check("comment", userId, commentLimit, Duration.ofMinutes(1));
     }
 
     private void check(String scope, String identity, int limit, Duration window) {
