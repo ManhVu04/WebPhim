@@ -43,7 +43,7 @@ jobs:
 
       - name: Verify backend
         working-directory: BEPhim
-        run: ./mvnw clean verify
+        run: bash ./mvnw clean verify
 
       - name: Verify and build frontend
         working-directory: fe
