@@ -6,6 +6,7 @@ import com.example.bephim.service.WatchHistoryService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/history")
@@ -62,8 +64,33 @@ public class WatchHistoryController {
 
         watchHistoryService.recordWatch(userId, body.movieSlug().trim(),
                 episodeSlug,
-                serverIndex, episodeIndex, body.movieName(), body.movieOriginName(), body.thumbUrl(), body.posterUrl(), body.year(), body.episodeName());
+                serverIndex, episodeIndex, body.movieName(), body.movieOriginName(), body.thumbUrl(), body.posterUrl(), body.year(), body.episodeName(),
+                body.progressSeconds(), body.durationSeconds());
         return ResponseEntity.ok(Map.of("recorded", true));
+    }
+
+    @GetMapping("/progress")
+    public ResponseEntity<?> getProgress(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam @NotBlank String movieSlug,
+            @RequestParam(defaultValue = "") String episodeSlug) {
+        if (jwt == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
+        }
+        String userId = jwt.getClaimAsString("userId");
+        if (userId == null || userId.isBlank()) {
+            return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
+        }
+        Optional<WatchHistory> entry =
+                watchHistoryService.getProgress(userId, movieSlug.trim(), episodeSlug.trim());
+        if (entry.isEmpty() || entry.get().getProgressSeconds() == null) {
+            return ResponseEntity.ok(Map.of("progressSeconds", 0, "durationSeconds", 0));
+        }
+        var h = entry.get();
+        return ResponseEntity.ok(Map.of(
+                "progressSeconds", h.getProgressSeconds(),
+                "durationSeconds", h.getDurationSeconds() != null ? h.getDurationSeconds() : 0
+        ));
     }
 
     @DeleteMapping

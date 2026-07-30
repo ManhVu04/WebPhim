@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authFetch } from '../../lib/authApi.js';
-import { MovieCard } from '../../components/MovieCard.jsx';
 import { Pagination } from '../../components/Pagination.jsx';
 import { Loading as State, ErrorState } from '../../components/State.jsx';
 
@@ -99,22 +98,39 @@ export function HistoryPage() {
           <div className="grid">
             {data.map((item) => (
               <div key={item.id} className="history-item-wrapper">
-                <MovieCard
-                  item={{
-                    slug: item.movieSlug,
-                    name: item.movieName,
-                    origin_name: item.movieOriginName,
-                    thumb_url: item.thumbUrl,
-                    poster_url: item.posterUrl,
-                    year: item.year
-                  }}
-                />
+                <Link
+                  to={`/xem/${encodeURIComponent(item.movieSlug)}?server=${item.serverIndex || 0}&ep=${item.episodeIndex || 0}`}
+                  className="card movie-card"
+                >
+                  <div className="poster-frame">
+                    <img
+                      src={item.thumbUrl || ''}
+                      alt={item.movieName || item.movieOriginName || item.movieSlug}
+                      className="poster"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="card-body">
+                    <div className="title">{item.movieName || item.movieOriginName || item.movieSlug}</div>
+                    <div className="meta">
+                      <span>{item.year || '—'}</span>
+                    </div>
+                  </div>
+                </Link>
                 {item.episodeName && (
                   <div className="history-meta">
                     <span>Tập {item.episodeName}</span>
                     <span className="muted" style={{ fontSize: '11px' }}>
                       {new Date(item.watchedAt).toLocaleDateString('vi-VN')}
                     </span>
+                  </div>
+                )}
+                {item.progressSeconds > 0 && item.durationSeconds > 0 && (
+                  <div className="history-progress-bar">
+                    <div
+                      className="history-progress-fill"
+                      style={{ width: `${Math.min(100, (item.progressSeconds / item.durationSeconds) * 100)}%` }}
+                    />
                   </div>
                 )}
               </div>

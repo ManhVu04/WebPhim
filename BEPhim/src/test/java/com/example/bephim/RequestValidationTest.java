@@ -50,6 +50,8 @@ class RequestValidationTest {
                 null,
                 null,
                 2026,
+                null,
+                null,
                 null);
 
         assertThat(validator.validate(request)).hasSize(2);

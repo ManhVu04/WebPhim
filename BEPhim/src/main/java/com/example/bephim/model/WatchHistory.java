@@ -33,4 +33,6 @@ public class WatchHistory {
     private String posterUrl;
     private Integer year;
     private String episodeName;
+    private Double progressSeconds;
+    private Double durationSeconds;
 }

@@ -40,17 +40,23 @@ export function isAllowedPlayerUrl(url) {
   }
 }
 
-export function Player({ title, linkEmbed, linkM3u8 }) {
+export function Player({ title, linkEmbed, linkM3u8, onTimeUpdate, initialTime, onResume }) {
   const safeEmbedUrl = isAllowedPlayerUrl(linkEmbed) ? String(linkEmbed).trim() : ''
   const safeM3u8Url = isAllowedPlayerUrl(linkM3u8) ? String(linkM3u8).trim() : ''
   const canUseEmbed = Boolean(safeEmbedUrl)
   const canUseM3u8 = Boolean(safeM3u8Url)
-  const defaultMode = canUseEmbed ? 'embed' : canUseM3u8 ? 'm3u8' : null
+  const shouldResumeWithM3u8 = canUseM3u8 && Number(initialTime) > 0
+  const defaultMode = shouldResumeWithM3u8 ? 'm3u8' : canUseEmbed ? 'embed' : canUseM3u8 ? 'm3u8' : null
   const [mode, setMode] = useState(defaultMode)
 
   useEffect(() => {
-    setMode(defaultMode)
-  }, [defaultMode])
+    setMode((currentMode) => {
+      if (shouldResumeWithM3u8) return 'm3u8'
+      if (currentMode === 'embed' && canUseEmbed) return currentMode
+      if (currentMode === 'm3u8' && canUseM3u8) return currentMode
+      return defaultMode
+    })
+  }, [canUseEmbed, canUseM3u8, defaultMode, shouldResumeWithM3u8])
 
   if (!mode) {
     return <div className="panel muted">Chưa có link xem cho tập này.</div>
@@ -88,16 +94,23 @@ export function Player({ title, linkEmbed, linkM3u8 }) {
           />
         </div>
       ) : (
-        <HlsVideo src={safeM3u8Url} />
+        <HlsVideo
+          src={safeM3u8Url}
+          onTimeUpdate={onTimeUpdate}
+          initialTime={initialTime}
+          onResume={onResume}
+        />
       )}
     </div>
   )
 }
 
-function HlsVideo({ src }) {
+function HlsVideo({ src, onTimeUpdate, initialTime, onResume }) {
   const videoRef = useRef(null)
   const [error, setError] = useState(null)
   const [loadStatus, setLoadStatus] = useState('idle') // idle | loading | loaded | error
+  const seekedRef = useRef(false)
+  const latestProgressRef = useRef(null)
 
   const isNativeSupported = useMemo(() => {
     if (typeof document === 'undefined') return false
@@ -186,6 +199,65 @@ function HlsVideo({ src }) {
       video.load()
     }
   }, [src, isNativeSupported])
+
+  useEffect(() => {
+    seekedRef.current = false
+    latestProgressRef.current = null
+  }, [src])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !onTimeUpdate) return
+    const reportProgress = (flush = false) => {
+      if (
+        Number.isFinite(video.currentTime)
+        && video.currentTime > 0
+        && Number.isFinite(video.duration)
+        && video.duration > 0
+      ) {
+        latestProgressRef.current = {
+          currentTime: video.currentTime,
+          duration: video.duration,
+        }
+        onTimeUpdate(video.currentTime, video.duration, flush)
+      } else if (flush && latestProgressRef.current) {
+        onTimeUpdate(
+          latestProgressRef.current.currentTime,
+          latestProgressRef.current.duration,
+          true,
+        )
+      }
+    }
+    const handle = () => {
+      reportProgress()
+    }
+    const handlePause = () => {
+      reportProgress(true)
+    }
+    video.addEventListener('timeupdate', handle)
+    video.addEventListener('pause', handlePause)
+    return () => {
+      video.removeEventListener('timeupdate', handle)
+      video.removeEventListener('pause', handlePause)
+      reportProgress(true)
+    }
+  }, [onTimeUpdate])
+
+  useEffect(() => {
+    if (!initialTime || initialTime <= 0 || loadStatus !== 'loaded' || seekedRef.current) return
+    const video = videoRef.current
+    if (!video) return
+
+    const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : null
+    const targetTime = duration ? Math.min(initialTime, Math.max(0, duration - 1)) : initialTime
+    try {
+      video.currentTime = targetTime
+      seekedRef.current = true
+      onResume?.(video.currentTime)
+    } catch {
+      seekedRef.current = false
+    }
+  }, [loadStatus, initialTime, onResume])
 
   return (
     <>

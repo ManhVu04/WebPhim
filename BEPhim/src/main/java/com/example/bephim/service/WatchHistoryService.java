@@ -12,6 +12,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,13 +25,11 @@ public class WatchHistoryService {
         return watchHistoryRepository.findByUserIdOrderByWatchedAtDesc(userId, PageRequest.of(page, size));
     }
 
-    /**
-     * Upsert: nếu đã xem episode này thì cập nhật watchedAt, không tạo bản ghi mới.
-     */
     public void recordWatch(String userId, String movieSlug, String episodeSlug,
                             int serverIndex, int episodeIndex,
                             String movieName, String movieOriginName,
-                            String thumbUrl, String posterUrl, Integer year, String episodeName) {
+                            String thumbUrl, String posterUrl, Integer year, String episodeName,
+                            Double progressSeconds, Double durationSeconds) {
         Query query = new Query(Criteria.where("userId").is(userId)
                 .and("movieSlug").is(movieSlug)
                 .and("episodeSlug").is(episodeSlug));
@@ -49,8 +48,14 @@ public class WatchHistoryService {
         if (posterUrl != null) update.set("posterUrl", posterUrl);
         if (year != null) update.set("year", year);
         if (episodeName != null) update.set("episodeName", episodeName);
+        if (progressSeconds != null) update.set("progressSeconds", progressSeconds);
+        if (durationSeconds != null) update.set("durationSeconds", durationSeconds);
 
         mongoTemplate.upsert(query, update, WatchHistory.class);
+    }
+
+    public Optional<WatchHistory> getProgress(String userId, String movieSlug, String episodeSlug) {
+        return watchHistoryRepository.findByUserIdAndMovieSlugAndEpisodeSlug(userId, movieSlug, episodeSlug);
     }
 
     public void clearHistory(String userId) {

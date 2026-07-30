@@ -29,6 +29,12 @@ public record WatchHistoryRequest(
         @Max(value = 2100, message = "year must be at most 2100")
         Integer year,
         @Size(max = 200, message = "episodeName must be at most 200 characters")
-        String episodeName
+        String episodeName,
+        @Min(value = 0, message = "progressSeconds must be non-negative")
+        @Max(value = 86400, message = "progressSeconds is too large")
+        Double progressSeconds,
+        @Min(value = 0, message = "durationSeconds must be non-negative")
+        @Max(value = 86400, message = "durationSeconds is too large")
+        Double durationSeconds
 ) {
 }

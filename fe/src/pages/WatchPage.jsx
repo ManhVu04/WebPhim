@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { cacheKeys, ophimApi } from '../lib/api.js'
 import { ErrorState, Loading } from '../components/State.jsx'
-import { Player } from '../components/Player.jsx'
+import { isAllowedPlayerUrl, Player } from '../components/Player.jsx'
 import { useAuth } from '../lib/auth.jsx'
 import { authFetch, reportComment } from '../lib/authApi.js'
 import { buildThumbUrl, buildPosterUrl } from '../lib/image.js'
@@ -10,7 +10,21 @@ import { MovieCard } from '../components/MovieCard.jsx'
 import { htmlToText } from '../lib/text.js'
 import { useSeoHead } from '../lib/useSeoHead.js'
 import { usePrerenderData } from '../lib/prerenderData.jsx'
+import {
+  playbackKey,
+  resumableSeconds,
+  resumeTimeForEpisode,
+} from '../lib/resumePlayback.js'
 import { buildWatchSeo } from '../lib/seo.js'
+
+function formatTime(seconds) {
+  const s = Math.floor(seconds)
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const sec = s % 60
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+  return `${m}:${String(sec).padStart(2, '0')}`
+}
 
 function clampIndex(n, max) {
   if (!Number.isFinite(n) || n < 0) return 0
@@ -280,6 +294,10 @@ export function WatchPage() {
   const [showAllEps, setShowAllEps] = useState(false)
   const [recommendations, setRecommendations] = useState(initialRecommendations)
   const { user } = useAuth()
+  const [savedProgress, setSavedProgress] = useState({ key: '', seconds: 0 })
+  const [resumeNotice, setResumeNotice] = useState(null)
+  const progressSaveRef = useRef({ key: '', at: 0, seconds: -1 })
+  const latestPlaybackRef = useRef(null)
 
   useEffect(() => {
     if (initialMovie) {
@@ -328,6 +346,10 @@ export function WatchPage() {
   )
   const safeEpIdx = useMemo(() => clampIndex(qEp, serverData.length), [qEp, serverData.length])
   const currentEp = serverData[safeEpIdx] || null
+  const episodeSlug = currentEp?.slug || currentEp?.name || ''
+  const episodeKey = playbackKey(slug, episodeSlug)
+  const initialTime = resumeTimeForEpisode(savedProgress, episodeKey)
+  const canResumeCurrentEpisode = isAllowedPlayerUrl(currentEp?.link_m3u8)
   const episodeName = currentEp?.name || ''
   const watchSeo = useMemo(
     () => buildWatchSeo(item, { episodeName, image: poster }),
@@ -351,7 +373,7 @@ export function WatchPage() {
         method: 'POST',
         body: JSON.stringify({
           movieSlug: slug,
-          episodeSlug: currentEp.slug || currentEp.name || '',
+          episodeSlug,
           serverIndex: safeServerIdx,
           episodeIndex: safeEpIdx,
           movieName: item.name,
@@ -365,7 +387,117 @@ export function WatchPage() {
     }, 1000)
 
     return () => window.clearTimeout(timeoutId)
-  }, [user, item, currentEp, slug, safeServerIdx, safeEpIdx, cdnBase])
+  }, [user, item, currentEp, slug, safeServerIdx, safeEpIdx, cdnBase, episodeSlug])
+
+  // Keep progress keyed to the active episode so stale requests can never seek another episode.
+  useEffect(() => {
+    const controller = new AbortController()
+    let active = true
+
+    setSavedProgress({ key: episodeKey, seconds: 0 })
+    setResumeNotice(null)
+
+    if (!user || !slug || !episodeSlug || !canResumeCurrentEpisode) {
+      return () => {
+        active = false
+        controller.abort()
+      }
+    }
+
+    authFetch(
+      `/api/history/progress?movieSlug=${encodeURIComponent(slug)}&episodeSlug=${encodeURIComponent(episodeSlug)}`,
+      { signal: controller.signal },
+    )
+      .then((data) => {
+        if (!active) return
+        setSavedProgress({ key: episodeKey, seconds: resumableSeconds(data) })
+      })
+      .catch((progressError) => {
+        if (active && progressError?.name !== 'AbortError') {
+          setSavedProgress({ key: episodeKey, seconds: 0 })
+        }
+      })
+
+    return () => {
+      active = false
+      controller.abort()
+    }
+  }, [user, slug, episodeSlug, episodeKey, canResumeCurrentEpisode])
+
+  const handleResume = useCallback((seconds) => {
+    if (!Number.isFinite(seconds) || seconds <= 0) return
+    setResumeNotice({ key: episodeKey, seconds })
+  }, [episodeKey])
+
+  useEffect(() => {
+    if (!resumeNotice) return
+    const currentNotice = resumeNotice
+    const id = setTimeout(() => {
+      setResumeNotice((notice) => (notice === currentNotice ? null : notice))
+    }, 4000)
+    return () => clearTimeout(id)
+  }, [resumeNotice])
+
+  const handleTimeUpdate = useCallback((currentTime, duration, flush) => {
+    if (
+      !Number.isFinite(currentTime)
+      || currentTime <= 0
+      || !Number.isFinite(duration)
+      || duration <= 0
+    ) {
+      return
+    }
+
+    latestPlaybackRef.current = { key: episodeKey, currentTime, duration }
+    if (!user || !currentEp) return
+
+    const now = Date.now()
+    const seconds = Math.floor(currentTime)
+    const lastSave = progressSaveRef.current
+    if (!flush && lastSave.key === episodeKey && now - lastSave.at < 15000) return
+    if (flush && lastSave.key === episodeKey && lastSave.seconds === seconds && now - lastSave.at < 1000) return
+    progressSaveRef.current = { key: episodeKey, at: now, seconds }
+
+    authFetch('/api/history', {
+      method: 'POST',
+      keepalive: Boolean(flush),
+      body: JSON.stringify({
+        movieSlug: slug,
+        episodeSlug,
+        serverIndex: safeServerIdx,
+        episodeIndex: safeEpIdx,
+        movieName: item?.name,
+        movieOriginName: item?.origin_name,
+        thumbUrl: buildThumbUrl(cdnBase, item?.thumb_url),
+        posterUrl: buildPosterUrl(cdnBase, item?.poster_url, item?.thumb_url),
+        year: item?.year,
+        episodeName: currentEp.name,
+        progressSeconds: seconds,
+        durationSeconds: Math.floor(duration),
+      }),
+    }).catch(() => {})
+  }, [user, currentEp, slug, safeServerIdx, safeEpIdx, item, cdnBase, episodeSlug, episodeKey])
+
+  const flushLatestProgress = useCallback(() => {
+    const latest = latestPlaybackRef.current
+    if (!latest || latest.key !== episodeKey) return
+    handleTimeUpdate(latest.currentTime, latest.duration, true)
+  }, [episodeKey, handleTimeUpdate])
+
+  // keepalive lets the final small request survive tab close/navigation.
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden) flushLatestProgress()
+    }
+    const handlePageHide = () => flushLatestProgress()
+
+    document.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('pagehide', handlePageHide)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('pagehide', handlePageHide)
+    }
+  }, [flushLatestProgress])
 
   // Sync state from URL when data is ready
   useEffect(() => {
@@ -421,7 +553,13 @@ export function WatchPage() {
           title={`${title} · ${currentServer?.server_name || 'Server'} · ${currentEp?.name || ''}`}
           linkEmbed={currentEp?.link_embed}
           linkM3u8={currentEp?.link_m3u8}
+          onTimeUpdate={handleTimeUpdate}
+          initialTime={initialTime}
+          onResume={handleResume}
         />
+        {resumeNotice?.key === episodeKey && resumeNotice.seconds > 0 && (
+          <div className="resume-toast">Tiếp tục từ {formatTime(resumeNotice.seconds)}</div>
+        )}
       </section>
 
       <section className="watch-info">
