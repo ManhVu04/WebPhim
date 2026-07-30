@@ -65,7 +65,7 @@ export function Layout() {
 
   // Prevent body scroll when overlays open
   useEffect(() => {
-    const isMobileSearchOpen = window.matchMedia('(max-width: 600px)').matches && searchFocused && q.trim()
+    const isMobileSearchOpen = window.matchMedia('(max-width: 760px)').matches && searchFocused && q.trim()
     if (mobileMenuOpen || isMobileSearchOpen) {
       document.body.style.overflow = 'hidden'
     } else {

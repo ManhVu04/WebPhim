@@ -404,6 +404,47 @@
   font-size: 13px;
 }
 
+.search-overlay-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-overlay-icon,
+.search-overlay-status {
+  display: inline-flex;
+  align-items: center;
+}
+
+.search-overlay-icon {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.search-overlay-status {
+  min-width: 0;
+  gap: 8px;
+}
+
+.search-overlay-status b {
+  color: var(--text);
+}
+
+.search-overlay-close {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-left: auto;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  cursor: pointer;
+}
+
 .search-overlay-footer {
   display: block;
   border-top: 1px solid var(--border);
@@ -2453,14 +2494,75 @@ select:focus {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding: max(12px, env(safe-area-inset-top)) 12px 12px;
+    width: 100vw;
+    max-width: none;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    margin: 0;
+    overflow: hidden;
+    padding:
+      max(12px, env(safe-area-inset-top))
+      12px
+      max(12px, env(safe-area-inset-bottom));
     background: #101319;
+  }
+
+  .search-wrapper-active .search {
+    flex: 0 0 auto;
   }
 
   .search-wrapper-active .search-overlay {
     position: static;
-    flex: 1;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    width: 100%;
+    min-height: 0;
     max-height: none;
+    overflow: hidden;
+  }
+
+  .search-overlay-header {
+    flex: 0 0 auto;
+    padding: 14px 16px;
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  .search-overlay-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .search-overlay-footer {
+    flex: 0 0 auto;
+  }
+
+  .search-overlay-close {
+    display: inline-flex;
+  }
+
+  .search-result-item {
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .search-result-thumb {
+    width: 56px;
+    height: 78px;
+  }
+
+  .search-result-title {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 15px;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
   .home-hero,
