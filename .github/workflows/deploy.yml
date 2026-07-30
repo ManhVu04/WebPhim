@@ -45,18 +45,21 @@ jobs:
         working-directory: BEPhim
         run: bash ./mvnw clean verify
 
-      - name: Verify and build frontend
+      - name: Verify frontend
+        working-directory: fe
+        run: |
+          npm ci
+          npm run lint
+          npm test
+          npm run audit:ci
+
+      - name: Build frontend for production
         working-directory: fe
         env:
           VITE_PUBLIC_SITE_URL: https://phimhaymienphi.id.vn
           PRERENDER_MAX_PAGES: "1"
           PRERENDER_CONCURRENCY: "3"
-        run: |
-          npm ci
-          npm run lint
-          npm test
-          npm run build:prerender
-          npm run audit:ci
+        run: npm run build:prerender
 
       - name: Package release
         run: |
